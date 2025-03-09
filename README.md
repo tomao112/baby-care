@@ -19,6 +19,7 @@
 ```
 プロジェクトセットアップ
 composer create-project laravel/laravel baby-care-app "11.*"
+npm init vue@latest
 ```
 
 ```

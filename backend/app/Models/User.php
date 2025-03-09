@@ -45,4 +45,12 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * ユーザーの子供を取得
+     */
+    public function children(): HasMany
+    {
+        return $this->hasMany(Child::class);
+    }
 }
