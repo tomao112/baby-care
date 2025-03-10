@@ -11,7 +11,7 @@
       <p>育児支援アプリへようこそ！</p>
 
       <div>
-        <router-lin to="/children">お子様一覧</router-lin>
+        <router-link to="/children">お子様一覧</router-link>
       </div>
     </div>
   </div>

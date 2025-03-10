@@ -39,7 +39,7 @@ export interface RegisterForm {
   password_confirmation: string;
 }
 
-export interface ChildForm {
+export interface ChildsForm {
   name: string;
   birth_date: string;
   gender: 'male' | 'female' | 'other' | null;

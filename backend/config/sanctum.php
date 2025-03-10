@@ -9,12 +9,12 @@ return [
         env('APP_URL') ? ','.parse_url(env('APP_URL'), PHP_URL_HOST) : ''
     ))),
     
-    'guard' => ['web'],
+    // 'guard' => ['web'],
     
-    'expiration' => null,
+    // 'expiration' => null,
     
-    'middleware' => [
-        'verify_csrf_token' => App\Http\Middleware\VerifyCsrfToken::class,
-        'encrypt_cookies' => App\Http\Middleware\EncryptCookies::class,
-    ],
+    // 'middleware' => [
+    //     'verify_csrf_token' => App\Http\Middleware\VerifyCsrfToken::class,
+    //     'encrypt_cookies' => App\Http\Middleware\EncryptCookies::class,
+    // ],
 ];

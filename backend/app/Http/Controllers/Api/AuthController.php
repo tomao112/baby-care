@@ -29,12 +29,19 @@ class AuthController extends Controller
         ]);
 
         // トークンを作成
-        $token = $user->createToken('auth_token')->plainTextToken;
+        // $token = $user->createToken('auth_token')->plainTextToken;
 
-        return response()->json([
-            'user' => $user,
-            'token' => $token
-        ], 201);
+        // return response()->json([
+        //     'user' => $user,
+        //     'token' => $token
+        // ], 201);
+            // Sanctum トークンの生成
+    $token = $user->createToken('auth_token')->plainTextToken;
+
+    return response()->json([
+        'user' => $user,
+        'token' => $token
+    ]);
     }
 
     /**

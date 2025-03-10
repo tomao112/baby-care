@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import { useAuthStore } from './auth';
-import type { Child, ChildForm } from '@/types';
+import type { Child, ChildsForm } from '@/types';
 
 interface ChildrenState {
   children: Child[],
@@ -22,6 +22,10 @@ export const useChildrenStore = defineStore('children', {
     error: null,
   }),
 
+  getters: {
+    hasChildren: (state) => state.children.length > 0,
+  },
+
   actions: {
     // 子供一覧を取得
     async fetchChildren(): Promise<AxiosResponse<Child[]>> {
@@ -36,7 +40,7 @@ export const useChildrenStore = defineStore('children', {
           }
         });
 
-        this.children = response.data;
+        this.children = response.data || [];
         return response;
       } catch(error) {
         const axiosError = error as AxiosError<ErrorResponse>;
@@ -72,7 +76,7 @@ export const useChildrenStore = defineStore('children', {
     },
 
     // 子供の情報を追加
-    async addChild(childData: ChildForm): Promise<AxiosResponse<Child>> {
+    async addChild(childData: ChildsForm): Promise<AxiosResponse<Child>> {
       this.loading = true;
       this.error = null;
 
@@ -98,7 +102,7 @@ export const useChildrenStore = defineStore('children', {
     },
 
     // 子供の情報を更新
-    async updateChild(id: number | string, childData: ChildForm): Promise<AxiosResponse<Child>> {
+    async updateChild(id: number | string, childData: ChildsForm): Promise<AxiosResponse<Child>> {
       this.loading = true;
       this.error = null;
 

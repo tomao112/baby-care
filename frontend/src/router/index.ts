@@ -5,15 +5,14 @@ import { useAuthStore } from '@/stores/auth';
 import HomeView from '@/views/HomeView.vue';
 import LoginView from '@/views/LoginView.vue';
 import RegisterView from '@/views/RegisterView.vue';
-// import ChildrenView from '@/views/ChildrenView.vue';
-// import ChildrenDetailView from '@/views/ChildrenDetailView.vue';
+import ChildrenView from '@/views/ChildrenView.vue';
+import ChildrenDetailView from '@/views/ChildrenDetailView.vue';
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
     name: 'home',
     component: HomeView,
-    meta: { requiresAuth: true}
   },
   {
     path: '/login',
@@ -25,19 +24,19 @@ const routes: Array<RouteRecordRaw> = [
     name: 'register',
     component: RegisterView,
   },
-  // {
-  //   path: '/children',
-  //   name: 'children',
-  //   component: ChildrenView,
-  //   meta: { requiresAuth: true}
-  // },
-  // {
-  //   path: '/children/:id',
-  //   name: 'child-detail',
-  //   component: ChildrenDetailView,
-  //   props: true,
-  //   meta: { requiresAuth: true}
-  // },
+  {
+    path: '/children',
+    name: 'children',
+    component: ChildrenView,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/children/:id',
+    name: 'child-detail',
+    component: ChildrenDetailView,
+    props: true,
+    meta: { requiresAuth: true }
+  },
 ]
 
 const router = createRouter({
@@ -47,13 +46,15 @@ const router = createRouter({
 
 // ナビゲーションガード
 router.beforeEach((to, from, next) => {
-  const authStore = useAuthStore();
-
-  // 認証が必要なルートかつログインしていない場合
-  if(to.meta.requiresAuth && !authStore.isLoggedIn) {
-    next({ name: 'login'});
+  console.log('ルーターガード:', to.path, 'requiresAuth:', to.meta.requiresAuth);
+  const authStore = useAuthStore()
+  
+  if (to.meta.requiresAuth && !authStore.isLoggedIn) {
+    console.log('認証が必要なページ。未ログインのためリダイレクト');
+    next('/login');
   } else {
-    next();
+    console.log('ページ遷移許可');
+    next()
   }
 })
 

@@ -90,7 +90,8 @@ const handleRegister = async () => {
   error.value = '';
 
   try {
-    await authStore.reggister(form);
+
+    await authStore.register(form);
 
     // 登録成功後、ホームページにリダイレクト
     router.push('/');

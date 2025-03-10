@@ -65,13 +65,32 @@ const handleLogin = async () => {
   error.value = '';
 
   try {
-    await authStore.login(form);
-
+    console.log('ログイン開始:', form);
+    const response = await authStore.login(form);
+    console.log('ログイン成功:', response);
+    
     // ログイン成功後、ホームページにリダイレクト
+    console.log('リダイレクト前:', router);
     router.push('/');
-  } catch(err: any) {
+    console.log('リダイレクト後');
+  } catch (err: any) {
     console.error('ログインエラー:', err);
-    error.value = err.response?.data?.message || 'ログインに失敗しました';
+    
+    // エラーメッセージの表示
+    if (err.response) {
+      console.log('エラーレスポンス:', err.response.data);
+      if (err.response.data.errors) {
+        const errors = err.response.data.errors;
+        const messages = Object.values(errors).flat();
+        error.value = messages.join('\n');
+      } else if (err.response.data.message) {
+        error.value = err.response.data.message;
+      } else {
+        error.value = 'ログインに失敗しました。入力内容を確認してください。';
+      }
+    } else {
+      error.value = 'ログインに失敗しました。ネットワーク接続を確認してください。';
+    }
   } finally {
     loading.value = false;
   }

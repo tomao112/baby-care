@@ -22,3 +22,44 @@ CORS（Cross-Origin Resource Sharing、オリジン間リソース共有）は�
    開発環境と本番環境でオリジンが異なる場合は、両方を allowed_origins に追加するか、環境変数で管理します。
    supports_credentials を true にした場合、allowed_origins に_（ワイルドカード）は使用できません。
    この設定により、Vue.js の開発サーバー（localhost:5173）から Laravel バックエンド（おそらく別のポートで動作）への API リクエストが可能になります。
+
+   ```
+   api.phpが認識されない場合
+   bootstrap/app.phpに以下の記述を行う
+   <?php
+   ```
+
+use Illuminate\Foundation\Application;
+use Illuminate\Foundation\Configuration\Exceptions;
+use Illuminate\Foundation\Configuration\Middleware;
+use App\Http\Middleware\HandleInertiaRequests;
+use Illuminate\Support\Facades\Route;
+
+return Application::configure(basePath: dirname(**DIR**))
+->withRouting(
+using: function () {
+Route::middleware('api')
+->prefix('api')
+->group(base_path('routes/api.php'));
+
+            Route::middleware('web')
+                ->group(base_path('routes/web.php'));
+        },
+        commands: __DIR__.'/../routes/console.php',
+        health: '/up',
+    )
+    ->withMiddleware(function (Middleware $middleware) {
+        $middleware->web(append: [
+            HandleInertiaRequests::class,
+        ]);
+    })
+    ->withExceptions(function (Exceptions $exceptions) {
+        //
+    })->create();
+    ```
+
+````
+laravel error log
+    tail -f storage/logs/laravel.log
+    ```
+````

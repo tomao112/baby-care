@@ -15,8 +15,9 @@ class ChildController extends Controller
      */
     public function index()
     {
-        $children = Auth::user()->$children;
+        $children = Auth::user()->children;
         return response()->json($children);
+
     }
 
     /**

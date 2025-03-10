@@ -1,9 +1,9 @@
 <?php
 
 return [
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie', 'register', 'login', 'logout'],
     'allowed_methods' => ['*'],
-    'allowed_origins' => ['http://localhost:5173'], // Vue.js の開発サーバーのURL
+    'allowed_origins' => ['*'], // Vue.js の開発サーバーのURL
     'allowed_origins_patterns' => [],
     'allowed_headers' => ['*'],
     'exposed_headers' => [],

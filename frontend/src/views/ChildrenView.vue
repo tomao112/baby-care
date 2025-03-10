@@ -11,9 +11,9 @@
       <p>読み込み中...</p>
     </div>
 
-    <div v-else-if="childrenStore.error">
+    <!-- <div v-else-if="childrenStore.error">
       {{ childrenStore.error }}
-    </div>
+    </div> -->
 
     <div v-else-if="children.length === 0">
       <p>お子さまの情報が登録されていません</p>
@@ -33,7 +33,7 @@
     </div>
 
     <!-- 子供追加フォーム -->
-    <model-dialog v-if="showAddForm" @close="showAddForm = false">
+    <modal-dialog v-if="showAddForm" @close="showAddForm = false">
       <template #header>
         <h3>お子さまの登録</h3>
       </template>
@@ -44,26 +44,26 @@
           @cancel="showAddForm = false"
         />
       </template>
-    </model-dialog>
+    </modal-dialog>
 
     <!-- 子供編集フォーム -->
-    <model-dialog v-if="showEditForm" @close="showEditForm = false">
+    <modal-dialog v-if="showEditForm" @close="showEditForm = false">
       <template #header>
         <h3>お子さま情報の編集</h3>
       </template>
       <template #default>
         <child-form 
-          :v-if="selectedChild"
+          v-if="selectedChild"
           :child="selectedChild"
           :loading="formLoading"
           @submit="updateChild"
           @cancel="showEditForm = false"
         />
       </template>
-    </model-dialog>
+    </modal-dialog>
 
     <!-- 削除確認ダイアログ -->
-    <model-dialog v-if="showDeleteConfirm" @close="showDeleteConfirm = false">
+    <modal-dialog v-if="showDeleteConfirm" @close="showDeleteConfirm = false">
       <template #header>
         <h3>削除の確認</h3>
       </template>
@@ -77,17 +77,17 @@
           </button>
         </div>
       </template>
-    </model-dialog>
+    </modal-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useChildrenStore } from '@/stores/children';
-import { Child, ChildForm } from '@/types';
-// import ChildItem from '@/components/children/ChildItem.vue';
-// import ChildForm from '@/components/children/ChildForm.vue';
-// import ModalDialog from '@/components/ModalDialog.vue';
+import { Child, ChildsForm } from '@/types';
+import ChildItem from '@/components/children/ChildItem.vue';
+import ChildForm from '@/components/children/ChildForm.vue';
+import ModalDialog from '@/components/ModalDialog.vue';
 
 const childrenStore = useChildrenStore();
 
@@ -111,7 +111,7 @@ onMounted(async () => {
 });
 
 // 子供の追加
-const addChild = async (formData: ChildForm) => {
+const addChild = async (formData: ChildsForm) => {
   formLoading.value = true;
   try {
     await childrenStore.addChild(formData);
@@ -130,7 +130,7 @@ const editChild = (child: Child) => {
 };
 
 // 子供の更新
-const updateChild = async (FormData: ChildForm) => {
+const updateChild = async (FormData: ChildsForm) => {
   if(!selectedChild.value) return;
 
   formLoading.value = true;

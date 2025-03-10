@@ -14,12 +14,12 @@ export const useAuthStore = defineStore('auth', {
   }),
 
   getters: {
-    isLoggedIn: (state) => !state.token
+    isLoggedIn: (state) => !!state.token
   },
 
   actions: {
     // ユーザ登録
-    async reggister(userData: RegisterForm) {
+    async register(userData: RegisterForm) {
       try {
         const response = await axios.post<AuthResponse>('/register', userData);
         this.setAuth(response.data);
@@ -29,16 +29,23 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    // ログイン
-    async login(credentials: LoginForm) {
-      try {
-        const response = await axios.post<AuthResponse>('/login', credentials);
-        this.setAuth(response.data);
-        return response;
-      } catch(error) {
-        throw error;
-      }
-    },
+// ログイン
+  async login(credentials: LoginForm) {
+    try {
+      console.log('ログイン試行:', credentials);
+      const response = await axios.post('/login', credentials);
+      console.log('ログインレスポンス:', response.data);
+      
+      // ログイン成功後、トークンとユーザー情報を保存
+      this.setAuth(response.data);
+      console.log('認証情報設定完了:', this.user, this.token);
+      
+      return response;
+    } catch (error) {
+      console.error('ログインエラー詳細:', error);
+      throw error;
+    }
+  },
 
     // ログアウト
     async logout() {
@@ -94,6 +101,6 @@ export const useAuthStore = defineStore('auth', {
 
       // ヘッダーからトークンと削除
       delete axios.defaults.headers.common['Authorization'];
-    }
+    },
   }
 })
