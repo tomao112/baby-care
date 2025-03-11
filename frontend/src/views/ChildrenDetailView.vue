@@ -15,10 +15,10 @@
     <div v-if="loading">
       <p>読み込み中...</p>
     </div>
-
+<!-- 
     <div v-else-if="error">
       {{ error }}
-    </div>
+    </div> -->
 
     <div v-else-if="child">
       <div>
@@ -92,6 +92,7 @@ const child = ref<Child | null>(null);
 
 // 初期データの読み込み
 onMounted(async () => {
+  loading.value = true;
   const childId = route.params.id;
   if(!childId) {
     router.push('/children');
@@ -106,7 +107,7 @@ onMounted(async () => {
     console.error('子供の情報の取得に失敗しました:', err);
     error.value = err.response?.data?.message || 'データの取得に失敗しました';
   } finally {
-    loading.value = true;
+    loading.value = false;
   }
 });
 

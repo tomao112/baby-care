@@ -68,7 +68,7 @@
         <h3>削除の確認</h3>
       </template>
       <template #default>
-        <p>「」の情報を削除してもよろしいですか？</p>
+        <p>「{{ selectedChild?.name }}」の情報を削除してもよろしいですか？</p>
         <p>この操作は取り消せません</p>
         <div>
           <button @click="showDeleteConfirm = false">キャンセル</button>

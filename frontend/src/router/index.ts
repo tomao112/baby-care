@@ -45,7 +45,7 @@ const router = createRouter({
 });
 
 // ナビゲーションガード
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
   console.log('ルーターガード:', to.path, 'requiresAuth:', to.meta.requiresAuth);
   const authStore = useAuthStore()
   

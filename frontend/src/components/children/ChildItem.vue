@@ -22,7 +22,7 @@
       </div>
     </div>
     <div>
-      <router-link to="`/children\${child.id}">詳細を見る</router-link>
+      <router-link :to="{ name: 'child-detail', params: { id: child.id } }">詳細を見る</router-link>
     </div>
   </div>
 </template>
@@ -44,6 +44,7 @@ const formatDate = (dateString: string): string => {
     day: 'numeric',
   });
 };
+
 
 // 年齢の計算
 const calculateAge = (birthDateString: string): string => {

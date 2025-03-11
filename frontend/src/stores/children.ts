@@ -58,11 +58,13 @@ export const useChildrenStore = defineStore('children', {
 
       try {
         const authStore = useAuthStore();
-        const response = await axios.get<Child>(`/cildren/${id}`, {
+        console.log(id);
+        const response = await axios.get<Child>(`/children/${id}`, {
           headers: {
             Authorization: `Bearer ${authStore.token}`
           }
         });
+        
 
         this.currentChild = response.data;
         return response;
@@ -108,7 +110,7 @@ export const useChildrenStore = defineStore('children', {
 
       try {
         const authStore = useAuthStore();
-        const response = await axios.put<Child>(`.children/${id}`, childData, {
+        const response = await axios.put<Child>(`/children/${id}`, childData, {
           headers: {
             Authorization: `Bearer ${authStore.token}`
           }

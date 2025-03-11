@@ -67,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue';
+import { reactive, onMounted, computed } from 'vue';
 import { Child, ChildsForm as ChildFormType } from '@/types';
 
 const props = defineProps<{
