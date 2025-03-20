@@ -7,6 +7,7 @@ import LoginView from '@/views/LoginView.vue';
 import RegisterView from '@/views/RegisterView.vue';
 import ChildrenView from '@/views/ChildrenView.vue';
 import ChildrenDetailView from '@/views/ChildrenDetailView.vue';
+import Profile from '@/views/Profile.vue';
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -37,6 +38,14 @@ const routes: Array<RouteRecordRaw> = [
     props: true,
     meta: { requiresAuth: true }
   },
+  {
+    path: '/profile',
+    name: 'profile',
+    component: Profile,
+    props: true,
+    meta: { requiresAuth: true }
+  },
+  
 ]
 
 const router = createRouter({
