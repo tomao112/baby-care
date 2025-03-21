@@ -2,91 +2,95 @@
   <div class="profile-container animate__animated animate__fadeIn">
     <h2 class="app-title animate__animated animate__fadeInDown">ユーザーのプロフィールを編集する画面です</h2>
 
-    <div v-if="loading" class="loading">
-      <div class="spinner"></div>
-      <p>読み込み中...</p>
-    </div>
+    <form @cubmit.prevent="handleSubmit" action="">
+      <div v-if="loading" class="loading">
+        <div class="spinner"></div>
+        <p>読み込み中...</p>
+      </div>
 
-    <div v-else class="content-container animate__animated animate__fadeIn" style="--animate-delay: 0.2s">
-      <div class="profile-card">
-        <div class="profile-header">
-          <div class="avatar-container animate__animated animate__fadeInUp" style="--animate-delay: 0.3s">
-            <div class="avatar-wrapper">
-              <img src="https://via.placeholder.com/150" alt="プロフィール画像" class="avatar-image">
-              <div class="avatar-overlay">
-                <span class="avatar-icon">📷</span>
+      <div v-else class="content-container animate__animated animate__fadeIn" style="--animate-delay: 0.2s">
+        <div class="profile-card">
+          <div class="profile-header">
+            <div class="avatar-container animate__animated animate__fadeInUp" style="--animate-delay: 0.3s">
+              <div class="avatar-wrapper">
+                <img src="https://via.placeholder.com/150" alt="プロフィール画像" class="avatar-image">
+                <div class="avatar-overlay">
+                  <span class="avatar-icon">📷</span>
+                </div>
               </div>
+              <button class="avatar-button">
+                <span>写真を変更</span>
+                <span class="button-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                    <circle cx="12" cy="13" r="4"></circle>
+                  </svg>
+                </span>
+              </button>
             </div>
-            <button class="avatar-button">
-              <span>写真を変更</span>
-              <span class="button-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                  <circle cx="12" cy="13" r="4"></circle>
-                </svg>
-              </span>
-            </button>
-          </div>
-        </div>
-        
-        <div class="profile-form animate__animated animate__fadeInUp" style="--animate-delay: 0.4s">
-          <div class="form-group">
-            <label for="username">ユーザー名</label>
-            <p v-if="authStore.user">{{ authStore.user?.name }}</p>
-            <p v-else>ユーザー情報読み込み中...</p>
-            <input type="text" id="username" :value="authStore.user?.name" placeholder="ユーザー名を入力してください" />
           </div>
           
-          <div class="form-group">
-            <label for="email">メールアドレス</label>
-            <input type="email" id="email" placeholder="メールアドレスを入力してください" />
-          </div>
-          
-          <div class="form-group">
-            <label for="nickname">ニックネーム</label>
-            <input type="text" id="nickname" placeholder="ニックネームを入力してください" />
-          </div>
-          
-          <div class="form-group">
-            <label for="bio">自己紹介</label>
-            <textarea id="bio" placeholder="自己紹介を書いてください" rows="4"></textarea>
-          </div>
-          
-          <div class="button-group animate__animated animate__fadeInUp" style="--animate-delay: 0.5s">
-            <button class="save-button">
-              <span>保存する</span>
-              <span class="button-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                  <polyline points="7 3 7 8 15 8"></polyline>
-                </svg>
-              </span>
-            </button>
-            <button class="cancel-button">
-              <span>キャンセル</span>
-              <span class="button-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </span>
-            </button>
+          <div class="profile-form animate__animated animate__fadeInUp" style="--animate-delay: 0.4s">
+            <div class="form-group">
+              <label for="username">ユーザー名</label>
+              <input type="text" id="username" v-model="form.username" placeholder="ユーザー名を入力してください" />
+            </div>
+            
+            <div class="form-group">
+              <label for="email">メールアドレス</label>
+              <input type="email" id="email" v-model="form.email" placeholder="メールアドレスを入力してください" />
+            </div>
+            <!-- <div class="form-group">
+              <label for="password">パスワード</label>
+              <input type="password" id="password" v-model="form.password" placeholder="パスワードを入力してください" />
+            </div> -->
+            <!-- <div class="form-group">
+              <label for="bio">自己紹介</label>
+              <textarea id="bio" placeholder="自己紹介を書いてください" rows="4"></textarea>
+            </div> -->
+            
+            <div class="button-group animate__animated animate__fadeInUp" style="--animate-delay: 0.5s">
+              <button type="submit" class="save-button">
+                <span>保存する</span>
+                <span class="button-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                    <polyline points="7 3 7 8 15 8"></polyline>
+                  </svg>
+                </span>
+              </button>
+              <button class="cancel-button">
+                <span>キャンセル</span>
+                <span class="button-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </form>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, reactive } from 'vue';
 import { useAuthStore } from '@/stores/auth';
-import { User } from '@/types';
 
 const authStore = useAuthStore();
 const loading = ref(true);
-const username = ref('');
+const emit = defineEmits(['submit', 'cancel']);
+
+const form = reactive({
+  username: '',
+  email: '',
+  password: '',
+})
+
 
 onMounted(async () => {
   try {
@@ -96,7 +100,10 @@ onMounted(async () => {
     }
 
     if(authStore.user) {
-      username.value = authStore.user.name || '';
+      form.username = authStore.user.name || '';
+      form.email = authStore.user.email || '';
+      // form.password = authStore.user.password || '';
+
     }
   } catch(error) {
     console.error('ユーザ情報の取得に失敗しました:', error);
@@ -104,6 +111,45 @@ onMounted(async () => {
     loading.value = false;
   }
 });
+
+const saveProfile = async () => {
+  try {
+    console.log(form);
+  } catch(error) {
+    console.error('更新に失敗しました', error);
+  }
+}
+
+// フォーム送信
+// const handleSubmit = () => {
+//   emit('submit', { ...form });
+// };
+
+// const updateProfile = async () => {
+//   try {
+//     loading.value = true;
+
+//     const response = await fetch('/api/user/prfile', {
+//       method: 'PUT',
+//       headers: {
+//         'Content-Type': 'application/json',
+//         'Authorization': `Bearer ${authStore.token}`
+//       },
+//       body: JSON.stringify({
+//         name: form.username,
+//         email: form.email,
+//       })
+//     });
+
+//     if(!response.ok) {
+//       throw new Error('プロフィールの更新に失敗しました。');
+//     }
+
+//     const result = await response.json();
+
+//     authStore.updateUserInfo(result)
+//   }
+// }
 
 </script>
 
