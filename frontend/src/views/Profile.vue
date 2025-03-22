@@ -2,7 +2,7 @@
   <div class="profile-container animate__animated animate__fadeIn">
     <h2 class="app-title animate__animated animate__fadeInDown">ユーザーのプロフィールを編集する画面です</h2>
 
-    <form @cubmit.prevent="handleSubmit" action="">
+    <form @submit.prevent="saveProfile">
       <div v-if="loading" class="loading">
         <div class="spinner"></div>
         <p>読み込み中...</p>
@@ -13,7 +13,7 @@
           <div class="profile-header">
             <div class="avatar-container animate__animated animate__fadeInUp" style="--animate-delay: 0.3s">
               <div class="avatar-wrapper">
-                <img src="https://via.placeholder.com/150" alt="プロフィール画像" class="avatar-image">
+                <img src="" alt="プロフィール画像" class="avatar-image">
                 <div class="avatar-overlay">
                   <span class="avatar-icon">📷</span>
                 </div>
@@ -83,7 +83,6 @@ import { useAuthStore } from '@/stores/auth';
 
 const authStore = useAuthStore();
 const loading = ref(true);
-const emit = defineEmits(['submit', 'cancel']);
 
 const form = reactive({
   username: '',
@@ -103,7 +102,6 @@ onMounted(async () => {
       form.username = authStore.user.name || '';
       form.email = authStore.user.email || '';
       // form.password = authStore.user.password || '';
-
     }
   } catch(error) {
     console.error('ユーザ情報の取得に失敗しました:', error);
@@ -112,44 +110,19 @@ onMounted(async () => {
   }
 });
 
+// フォーム送信
 const saveProfile = async () => {
   try {
-    console.log(form);
+    await authStore.updateProfile({
+      name: form.username,
+      email: form.email,
+    });
+    alert('プロフィールを更新しました');
   } catch(error) {
-    console.error('更新に失敗しました', error);
+    alert('プロフィールの更新に失敗しました');
+    throw error;
   }
 }
-
-// フォーム送信
-// const handleSubmit = () => {
-//   emit('submit', { ...form });
-// };
-
-// const updateProfile = async () => {
-//   try {
-//     loading.value = true;
-
-//     const response = await fetch('/api/user/prfile', {
-//       method: 'PUT',
-//       headers: {
-//         'Content-Type': 'application/json',
-//         'Authorization': `Bearer ${authStore.token}`
-//       },
-//       body: JSON.stringify({
-//         name: form.username,
-//         email: form.email,
-//       })
-//     });
-
-//     if(!response.ok) {
-//       throw new Error('プロフィールの更新に失敗しました。');
-//     }
-
-//     const result = await response.json();
-
-//     authStore.updateUserInfo(result)
-//   }
-// }
 
 </script>
 

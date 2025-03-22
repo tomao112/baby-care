@@ -40,6 +40,12 @@ export interface RegisterForm {
   password_confirmation: string;
 }
 
+//プロフィール更新フォームの型
+export interface ProfileUpdateForm {
+  name: string;
+  email: string;
+}
+
 export interface ChildsForm {
   name: string;
   birth_date: string;

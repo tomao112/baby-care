@@ -61,10 +61,10 @@ class AuthController extends Controller
         }
 
         $user = User::where('email', $request->email)->firstOrFail();
-        
+
         // 既存のトークンを削除
         $user->tokens()->delete();
-        
+
         // 新しいトークンを作成
         $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -91,5 +91,34 @@ class AuthController extends Controller
     public function user(Request $request)
     {
         return response()->json($request->user());
+    }
+
+    /**
+     * ユーザーの情報を更新
+     */
+    public function update(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $request->user()->id,
+        ]);
+
+        $user = $request->user();
+
+        $updated = $user->update([
+            'name' => $request->name,
+            'email' => $request->email,
+        ]);
+
+        if(!$updated) {
+            return response()->json(['message' => '更新失敗'], 500);
+        }
+
+        return response()->json([
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'message' => 'プロフィール更新成功',
+        ], 200);
     }
 }

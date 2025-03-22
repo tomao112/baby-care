@@ -1,4 +1,4 @@
-import { User, AuthResponse, LoginForm, RegisterForm } from '@/types';
+import { User, AuthResponse, LoginForm, RegisterForm, ProfileUpdateForm } from '@/types';
 import { defineStore } from 'pinia';
 import axios from 'axios';
 
@@ -101,6 +101,24 @@ export const useAuthStore = defineStore('auth', {
 
       // ヘッダーからトークンと削除
       delete axios.defaults.headers.common['Authorization'];
+    },
+
+    // ユーザー情報更新
+    async updateProfile(profileData: ProfileUpdateForm) {
+      try {
+        const response = await axios.put('/update', profileData,{
+          headers: {
+            'Authorization': `Bearer ${this.token}`
+          }
+        });
+        // ユーザー情報の更新
+        this.user = response.data;
+
+        return response.data;
+      } catch(error) {
+        console.error('プロフィール更新エラー：', error);
+        throw error;
+      }
     },
   }
 })

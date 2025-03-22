@@ -7,14 +7,15 @@ use App\Http\Controllers\Api\ChildController;
 
 // 認証関連のルート（トークン不要）
 Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login'])->name('login');
 
 // 認証が必要なAPIルート
 Route::middleware('auth:sanctum')->group(function () {
     // ユーザー情報
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
-    
+    Route::put('/update', [AuthController::class, 'update']);
+
     // 子ども情報のCRUD
     Route::apiResource('children', ChildController::class);
 });
