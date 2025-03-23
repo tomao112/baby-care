@@ -46,9 +46,37 @@ export interface ProfileUpdateForm {
   email: string;
 }
 
+// 子供情報フォームの型
 export interface ChildsForm {
   name: string;
   birth_date: string;
   gender: 'male' | 'female' | 'other' | null;
   notes: string | null;
 }
+
+
+
+export interface Child {
+  id: number;
+  user_id: number;
+  name: string;
+  birth_date: string;
+  gender: "male" | "female" | "other" | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  growth_records?: GrowthRecord[];
+}
+
+export interface GrowthRecord {
+  id: number;
+  child_id: number;
+  date: string;
+  height?: number | null;
+  weight?: number | null;
+  head_circumference?: number | null;
+  memo?: string | null;
+  created_at: string;
+  updated_at: string;
+} 
+

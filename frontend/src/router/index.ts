@@ -8,6 +8,7 @@ import RegisterView from '@/views/RegisterView.vue';
 import ChildrenView from '@/views/ChildrenView.vue';
 import ChildrenDetailView from '@/views/ChildrenDetailView.vue';
 import Profile from '@/views/Profile.vue';
+import GrowthRecord from '@/views/GrowthRecord.vue';
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -35,6 +36,13 @@ const routes: Array<RouteRecordRaw> = [
     path: '/children/:id',
     name: 'child-detail',
     component: ChildrenDetailView,
+    props: true,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/children/:id/growth-Records',
+    name: 'growth-Record',
+    component: GrowthRecord,
     props: true,
     meta: { requiresAuth: true }
   },

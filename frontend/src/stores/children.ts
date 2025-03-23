@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import { useAuthStore } from './auth';
-import type { Child, ChildsForm } from '@/types';
+import type { Child, ChildsForm, GrowthRecord } from '@/types';
 
 interface ChildrenState {
   children: Child[],
@@ -58,7 +58,6 @@ export const useChildrenStore = defineStore('children', {
 
       try {
         const authStore = useAuthStore();
-        console.log(id);
         const response = await axios.get<Child>(`/children/${id}`, {
           headers: {
             Authorization: `Bearer ${authStore.token}`
@@ -161,6 +160,52 @@ export const useChildrenStore = defineStore('children', {
         const axiosError = error as AxiosError<ErrorResponse>;
         this.error = axiosError.response?.data?.message || 'データの削除に失敗しました';
         throw EvalError;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // 成長記録を取得
+    async fetchGrowthRecord(id: number | string): Promise<AxiosResponse<GrowthRecord[]>> {
+      this.loading = true;
+      this.error = null;
+
+      try {
+        const authStore = useAuthStore();
+        const response = await axios.get<GrowthRecord[]>(`/children/${id}/growth-records`, {
+          headers: {
+            Authorization: `Bearer ${authStore.token}`
+          }
+        });
+        return response;
+      } catch(error) {
+        const axiosError = error as AxiosError<ErrorResponse>;
+        this.error = axiosError.response?.data?.message || 'データの取得に失敗しました';
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // 子供の成長記録を作成するメソッド
+    async createGrowthRecord(data: any): Promise<AxiosResponse<GrowthRecord>> {
+      this.loading = true;
+      this.error = null;
+
+      try {
+        const authStore = useAuthStore();
+        // API_URLを使わずに直接パスを指定します
+        const response = await axios.post<GrowthRecord>('/growth-records', data, {
+          headers: {
+            Authorization: `Bearer ${authStore.token}`
+          }
+        });
+        return response;
+      } catch (error) {
+        const axiosError = error as AxiosError<ErrorResponse>;
+        this.error = axiosError.response?.data?.message || '成長記録の作成に失敗しました';
+        console.error('成長記録の作成に失敗しました:', error);
+        throw error;
       } finally {
         this.loading = false;
       }

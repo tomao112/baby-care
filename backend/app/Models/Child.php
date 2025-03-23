@@ -23,7 +23,7 @@ class Child extends Model
 
     /**
      * 日付として扱う属性
-     * 
+     *
      * @var array<int, string>
      */
     protected $casts = [
@@ -36,5 +36,10 @@ class Child extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function growthRecords(): HasMany
+    {
+        return $this->hasMany(growthRecords::class);
     }
 }
