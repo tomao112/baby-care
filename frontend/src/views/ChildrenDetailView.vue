@@ -69,7 +69,6 @@
         </div>
       </div>
 
-      <!-- 成長記録セクションのデザイン - 「ここに成長記録などの追加情報を表示」のコメント部分を置き換え -->
       <div class="info-card growth-record-section">
         <div class="card-header">
           <h3 class="section-title">
@@ -80,16 +79,16 @@
             <span>成長記録</span>
           </h3>
           <div class="header-actions">
-            <!-- 成長記録追加ボタン -->
-            <button class="add-record-button">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
-              <span>記録を追加</span>
-            </button>
+            <router-link :to="`/children/${child.id}/growth-records`" class="">
+              <button class="add-record-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                <span>記録を追加</span>
+              </button>
+            </router-link>
             
-            <!-- 成長記録一覧へ遷移するボタン -->
             <router-link :to="`/children/${child.id}/growth-records`" class="view-records-button">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14"></path>
@@ -101,13 +100,11 @@
         </div>
         
         <div class="card-body">
-          <!-- 成長記録がない場合 -->
           <div class="empty-records">
             <div class="empty-icon">📝</div>
             <p class="empty-title">まだ成長記録がありません</p>
             <p class="empty-description">「記録を追加」ボタンから記録を始めましょう</p>
             
-            <!-- 成長記録ページへの遷移ボタン（モバイル表示用） -->
             <router-link :to="`/children/${child.id}/growth-records`" class="mobile-view-records-button">
               すべての記録を見る
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -118,9 +115,22 @@
           </div>
         </div>
       </div>
+
+      <div class="info-card development-section">
+        <div class="card-header">
+          <h3 class="section-title">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+            <span>発達記録</span>
+          </h3>
+        </div>
+        <div class="card-body">
+          <Development :childId="child?.id" />
+        </div>
+      </div>
     </div>
 
-    <!-- 子供編集フォーム -->
     <modal-dialog v-if="showEditForm && child" @close="showEditForm = false">
       <template #header>
         <h3>お子さま情報の編集</h3>
@@ -144,6 +154,7 @@ import { useChildrenStore } from '@/stores/children';
 import { Child, ChildsForm } from '@/types';
 import ChildForm  from '@/components/children/ChildForm.vue';
 import ModalDialog from '@/components/ModalDialog.vue';
+import Development from './Development.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -549,7 +560,6 @@ const formatGender = (gender: string | null): string => {
   }
 }
 
-/* 成長記録用のCSS - 既存のスタイルの後に追加 */
 .growth-record-section .card-header {
   display: flex;
   justify-content: space-between;
@@ -829,7 +839,6 @@ const formatGender = (gender: string | null): string => {
   border-color: #6a5acd;
 }
 
-/* レスポンシブ対応 */
 @media (max-width: 48rem) {
   .chart-filters {
     flex-direction: column;
@@ -845,7 +854,6 @@ const formatGender = (gender: string | null): string => {
   }
 }
 
-/* 成長記録ボタン関連の追加スタイル */
 .growth-record-section .header-actions {
   display: flex;
   gap: 0.8rem;
@@ -928,7 +936,6 @@ const formatGender = (gender: string | null): string => {
   transform: translateX(0.2rem);
 }
 
-/* レスポンシブデザイン - モバイル用 */
 @media (max-width: 48rem) {
   .growth-record-section .header-actions {
     flex-direction: column;
@@ -941,11 +948,19 @@ const formatGender = (gender: string | null): string => {
   }
   
   .view-records-button {
-    display: none; /* ヘッダーのボタンを非表示 */
+    display: none;
   }
   
   .mobile-view-records-button {
-    display: flex; /* モバイル用のボタンを表示 */
+    display: flex;
   }
+}
+
+.development-section .card-body {
+  padding: 0;
+}
+
+.info-card + .info-card {
+  margin-top: 2rem;
 }
 </style>

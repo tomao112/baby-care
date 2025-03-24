@@ -7,6 +7,7 @@ use App\Models\GrowthRecord;
 use App\Http\Requests\StoreGrowthRecordRequest;
 use App\Http\Requests\UpdateGrowthRecordRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class GrowthRecordController extends Controller
 {
@@ -81,16 +82,44 @@ class GrowthRecordController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateGrowthRecordRequest $request, GrowthRecord $growthRecord)
+    public function update(Request $request, $id)
     {
-        //
+        // バリデーション
+        $validated = $request->validate([
+            'record_date' => 'required|date',
+            'height' => 'required|numeric',
+            'weight' => 'required|numeric',
+            'memo' => 'nullable|string'
+        ]);
+
+        // 指定されたIDの成長記録を取得して更新
+        $record = GrowthRecord::findOrFail($id);
+
+        // 認可チェック（この記録がユーザーのものかどうか）
+        if ($record->child->user_id !== Auth::id()) {
+            return response()->json(['message' => 'This action is unauthorized.'], 403);
+        }
+
+        // データを更新
+        $record->update($validated);
+
+        return response()->json($record);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(GrowthRecord $growthRecord)
+    public function destroy($id)
     {
-        //
+        $record = GrowthRecord::findOrFail($id);
+
+        // 認可チェック（この記録がユーザーのものかどうか）
+        if ($record->child->user_id !== Auth::id()) {
+            return response()->json(['message' => 'This action is unauthorized.'], 403);
+        }
+
+        $record->delete();
+
+        return response()->json(['message' => 'Record deleted successfully']);
     }
 }

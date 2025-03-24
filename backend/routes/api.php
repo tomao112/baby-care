@@ -20,4 +20,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('children', ChildController::class);
     Route::get('children/{childId}/growth-records', [GrowthRecordController::class, 'getByChild']);
     Route::post('/growth-records', [GrowthRecordController::class, 'edit']);
+    Route::put('/growth-records/{id}', [GrowthRecordController::class, 'update']);
 });

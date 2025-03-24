@@ -58,15 +58,6 @@
             </svg>
             <span>成長記録</span>
           </h3>
-          <div class="header-actions">
-            <button @click="openModal()" class="add-record-button">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
-              <span>記録を追加</span>
-            </button>
-          </div>
         </div>
         
         <div class="card-body">
@@ -214,13 +205,6 @@
             </svg>
             <span>成長記録の追加</span>
           </h3>
-          <button @click="activeMode = 'view'" class="view-records-button">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-              <circle cx="12" cy="12" r="3"></circle>
-            </svg>
-            <span>記録を見る</span>
-          </button>
         </div>
         
         <div class="card-body">
@@ -323,7 +307,7 @@
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
-            <span>成長記録の追加</span>
+            <span>{{ isEditMode ? '成長記録の編集' : '成長記録の追加' }}</span>
           </h3>
           <button @click="closeModal" class="modal-close-button">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -444,9 +428,14 @@ const activeMode = ref('view'); // view または add
 const activeTab = ref('physical'); // physical, development, checkup, vaccine
 const activeFormTab = ref('physical'); // フォーム用タブ
 
+// 編集モード用の状態変数
+const isEditMode = ref(false);
+const editingRecordId = ref<number | null>(null);
+
 // GrowthRecordの拡張型
 type ExtendedGrowthRecord = GrowthRecord & {
   isEmpty?: boolean;
+  record_date?: string; // record_dateプロパティを追加
 };
 
 // 子供の情報
@@ -504,7 +493,8 @@ const getAllMonthsData = computed((): ExtendedGrowthRecord[] => {
     
     // この年月にデータがあるか探す
     const existingRecord = child.value.growth_records?.find(record => {
-      const recordDate = new Date(record.date);
+      // 日付フィールドを確実に取得
+      const recordDate = new Date(record.date || (record as any).record_date);
       return recordDate.getMonth() === targetMonth && 
              recordDate.getFullYear() === targetYear;
     });
@@ -596,8 +586,20 @@ onMounted(async () => {
     console.log("成長記録レスポンス:", recordsResponse);
     
     if (recordsResponse && recordsResponse.data) {
-      child.value.growth_records = recordsResponse.data;
-      console.log("取得した成長記録:", child.value.growth_records);
+      // レスポンスデータのフィールド名を確認して標準化
+      const normalizedRecords = recordsResponse.data.map(record => {
+        // もしrecord_dateフィールドがあればdateフィールドに変換
+        if ((record as any).record_date && !record.date) {
+          return {
+            ...record,
+            date: (record as any).record_date
+          };
+        }
+        return record;
+      });
+      
+      child.value.growth_records = normalizedRecords;
+      console.log("標準化した成長記録:", child.value.growth_records);
     } else {
       child.value.growth_records = [];
     }
@@ -642,19 +644,40 @@ const submitForm = async () => {
     }
     
     // APIに送信するデータの準備 - フィールド名を変更
-    const submitData = {
+    const submitData: {
+      child_id?: number;
+      record_date: string;
+      height: number;
+      weight: number;
+      memo: string;
+      id?: number; // idフィールドを追加
+    } = {
       child_id: child.value?.id,
-      record_date: formData.value.date,  // dateをrecord_dateに変更
-      height: formData.value.height,
-      weight: formData.value.weight,
+      record_date: formData.value.date,
+      height: formData.value.height as number, // nullはバリデーションで除外済み
+      weight: formData.value.weight as number, // nullはバリデーションで除外済み
       memo: formData.value.memo
     };
     
-    console.log('送信するデータ:', submitData);
+    // console.log('認証トークン確認:', !!childrenStore.token);
     
-    // API呼び出し
-    const response = await childrenStore.createGrowthRecord(submitData);
-    console.log('保存成功:', response.data);
+    let response;
+    
+    // 編集モードか新規作成モードかで処理を分岐
+    if (isEditMode.value && editingRecordId.value) {
+      try {
+        // 編集モード：更新API呼び出し - createではなくupdateを使う
+        response = await childrenStore.updateGrowthRecord(editingRecordId.value, submitData);
+        console.log('更新成功:', response.data);
+      } catch (error) {
+        console.error('API呼び出し中のエラー:', error);
+        throw error;
+      }
+    } else {
+      // 新規作成モード
+      response = await childrenStore.createGrowthRecord(submitData);
+      console.log('保存成功:', response.data);
+    }
     
     // 成功時の処理
     resetForm();
@@ -664,7 +687,22 @@ const submitForm = async () => {
     const childId = route.params.id;
     if (childId && child.value) {
       const response = await childrenStore.fetchGrowthRecord(childId.toString());
-      child.value.growth_records = response.data;
+      
+      // データを標準化
+      if (response && response.data) {
+        const normalizedRecords = response.data.map(record => {
+          if ((record as any).record_date && !record.date) {
+            return {
+              ...record,
+              date: (record as any).record_date
+            };
+          }
+          return record;
+        });
+        
+        child.value.growth_records = normalizedRecords;
+        console.log("更新後の成長記録:", child.value.growth_records);
+      }
     }
     
   } catch (err: any) {
@@ -678,37 +716,28 @@ const submitForm = async () => {
   }
 };
 
-// 性別に基づくクラスを取得（共通関数）
-const getGenderClass = (gender: string | null): string => {
-  if (!gender) return 'gender-unknown';
-  
-  const genderClassMap: Record<string, string> = {
-    'male': 'gender-male',
-    'female': 'gender-female',
-    'other': 'gender-other',
-  };
-  
-  return genderClassMap[gender] || 'gender-unknown';
-};
-
-// 日付のフォーマット（共通関数）
-const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('ja-JP', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-};
-
-// 編集ボタンの処理
-const editRecord = (id: number) => {
-  
-};
-
 // 削除ボタンの処理
-const deleteRecord = (id: number) => {
+const deleteRecord = async (id: number) => {
+  // 確認ダイアログを表示
+  if (!confirm('この記録を削除してもよろしいですか？')) {
+    return;
+  }
   
+  try {
+    // APIを呼び出して記録を削除
+    await childrenStore.deleteGrowthRecord(id);
+    
+    // 削除後にデータを更新（成長記録リストから削除対象を除外）
+    if (child.value && child.value.growth_records) {
+      child.value.growth_records = child.value.growth_records.filter(record => record.id !== id);
+    }
+    
+    // 成功メッセージ
+    alert('記録を削除しました');
+  } catch (err: any) {
+    console.error('記録の削除に失敗しました:', err);
+    alert('記録の削除に失敗しました');
+  }
 };
 
 // 月を日本語で取得する関数
@@ -745,16 +774,26 @@ const showFormModal = ref(false);
 
 // モーダルを開く関数
 const openModal = (date?: string) => {
-  // 日付が指定されている場合はフォームにセット
-  if (date) {
-    formData.value.date = date;
+  // 編集モードでない場合のみ、日付を設定
+  if (!isEditMode.value) {
+    if (date) {
+      formData.value.date = date;
+    } else {
+      // 今日の日付をセット
+      formData.value.date = new Date().toISOString().split('T')[0];
+    }
   }
+  
   showFormModal.value = true;
 };
 
 // モーダルを閉じる関数
 const closeModal = () => {
   showFormModal.value = false;
+  
+  // 編集モードをリセット
+  isEditMode.value = false;
+  editingRecordId.value = null;
 };
 
 // 特定の日付の記録を追加する関数を修正
@@ -773,6 +812,35 @@ const showMoreRecords = () => {
   } else {
     // まだ全て表示していない場合は全て表示
     displayLimit.value = -1;
+  }
+};
+
+// 編集ボタンの処理
+const editRecord = (id: number) => {
+  console.log('編集開始 - ID:', id, '型:', typeof id);
+  
+  // 編集対象の記録を見つける
+  const recordToEdit = child.value?.growth_records?.find(record => record.id === id);
+  
+  if (recordToEdit) {
+    console.log('編集対象のレコード:', recordToEdit);
+    // 編集モードをオン
+    isEditMode.value = true;
+    editingRecordId.value = Number(id); // 確実に数値型に変換
+    
+    // フォームに値をセット
+    formData.value = {
+      date: recordToEdit.date || (recordToEdit as any).record_date || '',
+      height: recordToEdit.height ?? null,
+      weight: recordToEdit.weight ?? null,
+      memo: recordToEdit.memo || ''
+    };
+    console.log('フォームデータを設定:', formData.value);
+    
+    // モーダルを開く
+    openModal();
+  } else {
+    console.error('編集対象のレコードが見つかりません - ID:', id);
   }
 };
 </script>

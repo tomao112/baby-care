@@ -187,15 +187,54 @@ export const useChildrenStore = defineStore('children', {
       }
     },
 
-    // 子供の成長記録を作成するメソッド
-    async createGrowthRecord(data: any): Promise<AxiosResponse<GrowthRecord>> {
+    // 子供の成長記録を作成する
+    async createGrowthRecord(data: any) {
+      this.loading = true;
+      this.error = null;
+      
+      try {
+        const authStore = useAuthStore();
+        console.log('認証トークン:', authStore.token?.substring(0, 10) + '...');
+        
+        // トークンがない場合のチェック
+        if (!authStore.token) {
+          console.error('認証トークンがありません');
+          this.error = '認証情報がありません。再ログインしてください。';
+          throw new Error('認証トークンがありません');
+        }
+        
+        const response = await axios.post('/growth-records', data, {
+          headers: {
+            Authorization: `Bearer ${authStore.token}`
+          }
+        });
+        
+        return response;
+      } catch (error) {
+        // エラー詳細をログに出力
+        console.error('成長記録の作成に失敗しました:', error);
+        if (axios.isAxiosError(error) && error.response) {
+          console.error('エラーレスポンス詳細:', error.response.data);
+          this.error = error.response.data.message || '成長記録の作成に失敗しました';
+        } else {
+          this.error = '成長記録の作成に失敗しました';
+        }
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // 成長記録を更新する
+    async updateGrowthRecord(id: number, data: any): Promise<AxiosResponse<GrowthRecord>> {
       this.loading = true;
       this.error = null;
 
       try {
         const authStore = useAuthStore();
-        // API_URLを使わずに直接パスを指定します
-        const response = await axios.post<GrowthRecord>('/growth-records', data, {
+        console.log('認証トークン:', authStore.token?.substring(0, 10) + '...');
+        
+        const response = await axios.put<GrowthRecord>(`/growth-records/${id}`, data, {
           headers: {
             Authorization: `Bearer ${authStore.token}`
           }
@@ -203,11 +242,28 @@ export const useChildrenStore = defineStore('children', {
         return response;
       } catch (error) {
         const axiosError = error as AxiosError<ErrorResponse>;
-        this.error = axiosError.response?.data?.message || '成長記録の作成に失敗しました';
-        console.error('成長記録の作成に失敗しました:', error);
+        console.error('APIエラー詳細:', axiosError.response?.data);
+        this.error = axiosError.response?.data?.message || '記録の更新に失敗しました';
+        console.error('記録の更新に失敗しました:', error);
         throw error;
       } finally {
         this.loading = false;
+      }
+    },
+
+    // 成長記録を削除する
+    async deleteGrowthRecord(id: number) {
+      try {
+        const authStore = useAuthStore();
+        const response = await axios.delete(`/growth-records/${id}`, {
+          headers: {
+            Authorization: `Bearer ${authStore.token}`
+          }
+        });
+        return response;
+      } catch (error) {
+        console.error('記録の削除に失敗しました:', error);
+        throw error;
       }
     }
   }
