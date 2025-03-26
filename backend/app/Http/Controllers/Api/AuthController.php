@@ -11,86 +11,59 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    /**
-     * ユーザー登録
-     */
-    public function register(Request $request)
+    private $authSevice;
+
+    public function __construct(AuthService $authService)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
-
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
-
-        // トークンを作成
-        // $token = $user->createToken('auth_token')->plainTextToken;
-
-        // return response()->json([
-        //     'user' => $user,
-        //     'token' => $token
-        // ], 201);
-            // Sanctum トークンの生成
-    $token = $user->createToken('auth_token')->plainTextToken;
-
-    return response()->json([
-        'user' => $user,
-        'token' => $token
-    ]);
+        $this->authService = $authService;
     }
 
-    /**
-     * ログイン
-     */
+    // ログイン
     public function login(Request $request)
     {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
+        try {
+            $result = $this->authService->login(
+                $request->email,
+                $request->password,
+            );
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
-            throw ValidationException::withMessages([
-                'email' => ['メールアドレスまたはパスワードが正しくありません。'],
-            ]);
+            return response()->json($result);
+        } catch (invalidCredentialsException $e) {
+            return response()->json([
+                'message' => 'メールアドレス、パスワードが正しくありません'
+            ], 401);
+        } catch (AccountLockedException $e) {
+            return response()->json([
+                'message' => 'アカウントがロックされています'
+            ], 423);
         }
-
-        $user = User::where('email', $request->email)->firstOrFail();
-
-        // 既存のトークンを削除
-        $user->tokens()->delete();
-
-        // 新しいトークンを作成
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'user' => $user,
-            'token' => $token
-        ]);
     }
 
-    /**
-     * ログアウト
-     */
+    // ユーザー登録
+    public function register(RegisterRequest $request)
+    {
+        try {
+            $result = $this->authService->register($request->validated());
+            return response()->json($result, 201);
+        } catch (UserAlreadyExistsException $e) {
+            return response()->json([
+                'message' => 'このメールアドレスは既に登録されています'
+            ], 422);
+        }
+    }
+
+    // ログアウト
     public function logout(Request $request)
     {
-        // 現在のトークンを削除
-        $request->user()->currentAccessToken()->delete();
-
+        $this->authService->logout($request->user());
         return response()->json(['message' => 'ログアウトしました']);
     }
 
-    /**
-     * 現在のユーザー情報を取得
-     */
+
+    // 現在のユーザー情報を取得
     public function user(Request $request)
     {
-        return response()->json($request->user());
+        return response()->json($this->authService->getCurrentUser($request->user()));
     }
 
     /**
@@ -98,27 +71,14 @@ class AuthController extends Controller
      */
     public function update(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $request->user()->id,
-        ]);
-
-        $user = $request->user();
-
-        $updated = $user->update([
-            'name' => $request->name,
-            'email' => $request->email,
-        ]);
-
-        if(!$updated) {
-            return response()->json(['message' => '更新失敗'], 500);
+        try {
+            $user = $this->authService->updateUser($request->user(), $request->validated());
+            return response()->json([
+                'user' => $user,
+                'message' => 'プロフィール更新成功',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => '更新に失敗しました'], 500);
         }
-
-        return response()->json([
-            'id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'message' => 'プロフィール更新成功',
-        ], 200);
     }
 }
