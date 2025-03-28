@@ -13,4 +13,4 @@ class UpdateUserRequest extends FormRequest
             'email' => 'required|email|unique:users,email,' . $this->user()->id,
         ];
     }
-} 
+}
