@@ -3,40 +3,52 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\AuthService;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use App\Http\Requests\Auth\LoginRequest;
+use App\Exceptions\Auth\InvalidCredentialsException;
 
 class AuthController extends Controller
 {
-    private $authSevice;
+    private $authService;
 
     public function __construct(AuthService $authService)
     {
         $this->authService = $authService;
+
     }
 
     // ログイン
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
-        try {
-            $result = $this->authService->login(
-                $request->email,
-                $request->password,
-            );
+    // 1. メソッドの最初でリクエストの内容を確認
+    try {
+        // エラーの詳細をログに出力
+        \Log::info('Login attempt', ['email' => $request->email]);
 
-            return response()->json($result);
-        } catch (invalidCredentialsException $e) {
-            return response()->json([
-                'message' => 'メールアドレス、パスワードが正しくありません'
-            ], 401);
-        } catch (AccountLockedException $e) {
-            return response()->json([
-                'message' => 'アカウントがロックされています'
-            ], 423);
-        }
+        $result = $this->authService->login(
+            $request->email,
+            $request->password
+        );
+
+        return response()->json($result);
+    } catch (\Exception $e) {
+        // エラーの詳細をログに出力
+        \Log::error('Login error', [
+            'message' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
+
+        return response()->json([
+            'message' => 'ログインに失敗しました',
+            'error' => $e->getMessage()  // 開発環境でのみ表示
+        ], 500);
+    }
     }
 
     // ユーザー登録

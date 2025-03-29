@@ -7,7 +7,7 @@ use App\Http\Controllers\Api\ChildController;
 use App\Http\Controllers\Api\GrowthRecordController;
 // 認証関連のルート（トークン不要）
 Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login'])->name('login');
+Route::post('/login', [AuthController::class, 'login']);
 
 // 認証が必要なAPIルート
 Route::middleware('auth:sanctum')->group(function () {

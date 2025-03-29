@@ -6,12 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Models\Child;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Requests\Children\AddChildRequest;
+use App\Http\Requests\Children\UpdateChildRequest;
+use Illuminate\Support\Facades\Log;
+use App\Helpers\LogHelper;
+
 class ChildController extends Controller
 {
     /**
-     * ログインユーザーの子ども一覧を取得
+     * ログインユーザーの子供一覧を取得
      *
-     * @return \Illuminate\Http\Response
+     * @return void
      */
     public function index()
     {
@@ -20,91 +25,92 @@ class ChildController extends Controller
 
     }
 
+
     /**
-     * 新しい子ども情報を保存
+     * 子供の情報を追加
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param AddChildRequest $request
+     * @return void
      */
-    public function store(Request $request)
+    public function store(AddChildRequest $request)
     {
-        //バリデーション
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'birth_date' => 'required|date',
-            'gender' => 'nullable|in:male,female,other',
-            'notes' => 'nullable|string',
-        ]);
+        try {
 
-        // 現在のユーザIDを追加
-        $validated['user_id'] = Auth::id();
+            // バリデーション
+            $validated = $request->validated();
+            // ユーザーIDを追加
+            $validated['user_id'] = Auth::id();
 
-        // 子供の情報を追加
-        $child = Child::create($validated);
+            // 子供の情報を追加
+            $child = Child::create($validated);
 
-        return response()->json($child, 201);
+            // log出力
+            LogHelper::pretty_log('子供の追加リクエスト', [
+                '子供の情報' => $child,
+            ]);
+
+            return response()->json($child, 201);
+        } catch (ChildAddException $e) {
+            return response()->json([
+                'message' => '子供の情報を正しく追加できませんでした。'
+            ], 400);
+        }
     }
 
     /**
-     * 指定した子ども情報を取得
+     * 子供の情報を取得
      *
-     * @param  \App\Models\Child  $child
-     * @return \Illuminate\Http\Response
+     * @param Child $child
+     * @return void
      */
     public function show(Child $child)
     {
-        //権限チェック
-        if(Auth::id() !== $child->user_id) {
-            return response()->json(['message' => '権限がありません'], 403);
-        }
-
         return response()->json($child);
     }
 
     /**
-     * 指定した子ども情報を更新
+     * 子供の情報を更新
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Child  $child
-     * @return \Illuminate\Http\Response
+     * @param UpdateChildRequest $request
+     * @param Child $child
+     * @return void
      */
-    public function update(Request $request, Child $child)
+    public function update(UpdateChildRequest $request, Child $child)
     {
-        //権限チェック
-        if(Auth::id() !== $child->user_id) {
-            return response()->json(['message' => '権限がありません'], 403);
+        try {
+            // バリデーション
+            $validated = $request->validated();
+
+            // 子供の情報を更新
+            $child->update($validated);
+
+            return response()->json($child);
+        } catch (ChildUpdateException $e) {
+            return response()->json([
+                'message' => '子供の情報を正しく更新できませんでした。'
+            ], 400);
         }
-
-        // バリデーション
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'birth_date' => 'required|date',
-            'gender' => 'nullable|in:male,female,other',
-            'notes' => 'nullable|string',
-        ]);
-
-        // 子供の情報を更新
-        $child->update($validated);
-
-        return response()->json($child);
     }
 
 
-        /**
-     * 指定した子ども情報を削除
+
+    /**
+     * 子供の情報を削除
      *
-     * @param  \App\Models\Child  $child
-     * @return \Illuminate\Http\Response
+     * @param Child $child
+     * @return void
      */
     public function destroy(Child $child)
     {
-        //権限チェック
-        if(Auth::id() !== $child->user_id) {
-            return response()->json(['message' => '権限がありません'], 403);
+        try {
+            $child->delete();
+
+            return response()->json(['message' => '削除しました']);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => '子供の情報を正しく削除できませんでした。'
+            ], 400);
         }
 
-        $child->delete();
-
-        return response()->json(['message' => '削除しました']);
     }
 }
