@@ -2,18 +2,18 @@
 
 namespace Tests\Unit\Http\Requests\Children;
 
-use App\Http\Requests\Children\ChildAddRequest;
+use App\Http\Requests\Children\AddChildRequest;
 use Illuminate\Support\Facades\Validator;
 use Tests\TestCase;
 
-class ChildAddRequestTest extends TestCase
+class AddChildRequestTest extends TestCase
 {
     protected $request;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->request = new ChildAddRequest();
+        $this->request = new AddChildRequest();
     }
 
     // 正しいデータの場合のテスト
