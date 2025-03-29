@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Database\Factories\ChildFactory;
 
 class Child extends Model
 {
@@ -41,5 +42,10 @@ class Child extends Model
     public function growthRecords(): HasMany
     {
         return $this->hasMany(growthRecords::class);
+    }
+
+    protected static function newFactory()
+    {
+        return ChildFactory::new();
     }
 }
