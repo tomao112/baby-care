@@ -10,9 +10,17 @@ use App\Http\Requests\Children\AddChildRequest;
 use App\Http\Requests\Children\UpdateChildRequest;
 use Illuminate\Support\Facades\Log;
 use App\Helpers\LogHelper;
+use App\Services\ChildService;
 
 class ChildController extends Controller
 {
+    private $childService;
+
+    public function __construct(ChildService $childService)
+    {
+        $this->childService = $childService;
+    }
+
     /**
      * ログインユーザーの子供一覧を取得
      *
@@ -20,11 +28,8 @@ class ChildController extends Controller
      */
     public function index()
     {
-        $children = Auth::user()->children;
-        return response()->json($children);
-
+        return $this->childService->getAllChildren();
     }
-
 
     /**
      * 子供の情報を追加
@@ -35,20 +40,7 @@ class ChildController extends Controller
     public function store(AddChildRequest $request)
     {
         try {
-
-            // バリデーション
-            $validated = $request->validated();
-            // ユーザーIDを追加
-            $validated['user_id'] = Auth::id();
-
-            // 子供の情報を追加
-            $child = Child::create($validated);
-
-            // log出力
-            LogHelper::pretty_log('子供の追加リクエスト', [
-                '子供の情報' => $child,
-            ]);
-
+            $child = $this->childService->store($request);
             return response()->json($child, 201);
         } catch (ChildAddException $e) {
             return response()->json([
@@ -78,12 +70,7 @@ class ChildController extends Controller
     public function update(UpdateChildRequest $request, Child $child)
     {
         try {
-            // バリデーション
-            $validated = $request->validated();
-
-            // 子供の情報を更新
-            $child->update($validated);
-
+            $child = $this->childService->update($request, $child);
             return response()->json($child);
         } catch (ChildUpdateException $e) {
             return response()->json([
@@ -91,8 +78,6 @@ class ChildController extends Controller
             ], 400);
         }
     }
-
-
 
     /**
      * 子供の情報を削除
@@ -104,13 +89,11 @@ class ChildController extends Controller
     {
         try {
             $child->delete();
-
             return response()->json(['message' => '削除しました']);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return response()->json([
                 'message' => '子供の情報を正しく削除できませんでした。'
             ], 400);
         }
-
     }
 }
