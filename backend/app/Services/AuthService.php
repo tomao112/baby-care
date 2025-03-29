@@ -7,7 +7,6 @@ use App\Repositories\Auth\UserRepository;
 use App\Services\TokenService;
 use Illuminate\Support\Facades\Hash;
 use App\Exceptions\Auth\InvalidCredentialsException;
-// use App\Exceptions\Auth\AccountLockedException;
 use App\Exceptions\Auth\UserAlreadyExistsException;
 use App\Events\Auth\UserRegistered;
 use Illuminate\Support\Facades\DB;
@@ -30,13 +29,8 @@ class AuthService
         $user = $this->userRepository->findByEmail($email);
 
         if (!$user || !Hash::check($password, $user->password)) {
-            // $this->handleFailedLogin($user);
             throw new InvalidCredentialsException();
         }
-
-        // if ($this->isLockedOut($user)) {
-        //     throw new AccountLockedException();
-        // }
 
         // 既存のトークンを削除
         $this->tokenService->revokeAllTokens($user);
