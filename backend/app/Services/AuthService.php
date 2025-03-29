@@ -83,17 +83,4 @@ class AuthService
     {
         return $this->userRepository->update($user->id, $data);
     }
-
-    // private function handleFailedLogin(?User $user): void
-    // {
-    //     if ($user) {
-    //         $this->userRepository->incrementLoginAttempts($user->id);
-    //     }
-    // }
-
-    // private function isLockedOut(User $user): bool
-    // {
-    //     return $user->login_attempts >= 5 &&
-    //            $user->last_attempt_at > now()->subMinutes(30);
-    // }
 }
