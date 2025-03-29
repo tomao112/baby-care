@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
-use App\Repositories\UserRepository;
+use App\Repositories\Auth\UserRepository;
 use App\Services\TokenService;
 use Illuminate\Support\Facades\Hash;
 use App\Exceptions\Auth\InvalidCredentialsException;

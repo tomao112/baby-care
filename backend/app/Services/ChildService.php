@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Child;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+
 class ChildService
 {
     public function index()
@@ -46,5 +47,10 @@ class ChildService
         } catch (\Exception $e) {
             throw new \Exception('子供の情報の更新に失敗しました。');
         }
+    }
+
+    public function getAllChildren()
+    {
+        return Child::all();
     }
 }
