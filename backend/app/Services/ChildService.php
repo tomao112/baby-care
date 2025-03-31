@@ -21,15 +21,9 @@ class ChildService
     public function store(Request $request)
     {
         try {
-            // バリデーション
             $validated = $request->validated();
-
-            // ユーザーIDを追加
             $validated['user_id'] = Auth::id();
-
-            // 子供の情報を追加
             $child = Child::create($validated);
-
             return $child;
         } catch (\Exception $e) {
             throw new \Exception('子供の追加に失敗しました。');
