@@ -2,16 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\User;
 use App\Repositories\GrowthRecordRepository;
-use App\Services\TokenService;
-use Illuminate\Support\Facades\Hash;
-use App\Exceptions\Auth\InvalidCredentialsException;
-use App\Exceptions\Auth\UserAlreadyExistsException;
-use App\Events\Auth\UserRegistered;
-use Illuminate\Support\Facades\DB;
 use App\Models\GrowthRecord;
 use Illuminate\Http\Request;
+use Exception;
 
 class GrowthRecordService
 {
@@ -20,13 +14,13 @@ class GrowthRecordService
     public function __construct(
         GrowthRecordRepository $growthRecordRepository,
     ) {
-        $this->GrowthRecordRepository = $growthRecordRepository;
+        $this->growthRecordRepository = $growthRecordRepository;
     }
 
     public function getByChild(string $childId)
     {
         try {
-            $growthRecords = $this->growthRecordRepository->findByChildId($childId);
+            $growthRecords = $this->growthRecordRepository->findByRecord($childId);
             return $growthRecords;
         } catch (\Exception $e) {
             throw new Exception('成長記録の取得に失敗しました。');
