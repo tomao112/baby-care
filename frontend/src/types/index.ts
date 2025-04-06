@@ -8,16 +8,17 @@ export interface User {
   updated_at: string;
 }
 
-// 子供情報の型
 export interface Child {
   id: number;
   user_id: number;
   name: string;
   birth_date: string;
-  gender: 'male' | 'female' | 'other' | null;
-  notes: string | null
+  gender: "male" | "female" | "other" | null;
+  notes: string | null;
   created_at: string;
   updated_at: string;
+  growth_records?: GrowthRecord[];
+  daily_records?: DailyRecord[];
 }
 
 // 認証情報の型
@@ -56,17 +57,7 @@ export interface ChildsForm {
 
 
 
-export interface Child {
-  id: number;
-  user_id: number;
-  name: string;
-  birth_date: string;
-  gender: "male" | "female" | "other" | null;
-  notes: string | null;
-  created_at: string;
-  updated_at: string;
-  growth_records?: GrowthRecord[];
-}
+
 
 export interface GrowthRecord {
   id: number;
@@ -79,4 +70,15 @@ export interface GrowthRecord {
   created_at: string;
   updated_at: string;
 } 
+
+export interface DailyRecord {
+  id: number;
+  child_id: number;
+  daily_event_stamps_id: number;
+  record_date: string;
+  record_time: string;
+  comment: string;
+  created_at: string;
+  updated_at: string;
+}
 

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import { useAuthStore } from './auth';
-import type { Child, ChildsForm, GrowthRecord } from '@/types';
+import type { Child, ChildsForm, DailyRecord, GrowthRecord } from '@/types';
 
 interface ChildrenState {
   children: Child[],
@@ -265,6 +265,29 @@ export const useChildrenStore = defineStore('children', {
         console.error('記録の削除に失敗しました:', error);
         throw error;
       }
+    },
+
+    // 子供の育児記録を取得
+    async fetchDailyRecord(childId: string): Promise<AxiosResponse<DailyRecord[]>> {
+      const authStore = useAuthStore();
+      const response = await axios.get<DailyRecord[]>(`/children/${childId}/daily-records`, {
+        headers: {
+          Authorization: `Bearer ${authStore.token}`
+        }
+      });
+      return response;
+    },
+
+    // 月ごとの育児記録を取得
+    async fetchDailyRecordByMonth(childId: string, year: number, month: number): Promise<AxiosResponse<DailyRecord[]>> {
+      const authStore = useAuthStore();
+      const response = await axios.get<DailyRecord[]>(`/children/${childId}/daily-records`, {
+        params: { year, month },
+        headers: {
+          Authorization: `Bearer ${authStore.token}`
+        }
+      });
+      return response;
     }
   }
 });
