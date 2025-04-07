@@ -18,6 +18,10 @@ export const useAuthStore = defineStore('auth', {
   },
 
   actions: {
+    // ログインユーザーの情報を格納
+    setUserInfo(userData: User) {
+      this.user = userData;
+    },
     // ユーザ登録
     async register(userData: RegisterForm) {
       try {
@@ -51,11 +55,7 @@ export const useAuthStore = defineStore('auth', {
     async logout() {
       try {
         if(this.token) {
-          await axios.post('/logout', {}, {
-            headers: {
-              Authorization: `Bearer ${this.token}`
-            }
-          })
+          await axios.post('/logout', {})
         }
       } catch(error) {
         console.log('ログアウト中にエラーが発生しました:', error);
@@ -69,11 +69,7 @@ export const useAuthStore = defineStore('auth', {
       try {
         if(!this.token) return null;
 
-        const response = await axios.get<User>('/user', {
-          headers: {
-            Authorization: `Bearer ${this.token}`
-          }
-        })
+        const response = await axios.get<User>('/user')
 
         this.user = response.data;
         return response;
@@ -106,11 +102,7 @@ export const useAuthStore = defineStore('auth', {
     // ユーザー情報更新
     async updateProfile(profileData: ProfileUpdateForm) {
       try {
-        const response = await axios.put('/update', profileData,{
-          headers: {
-            'Authorization': `Bearer ${this.token}`
-          }
-        });
+        const response = await axios.put('/update', profileData);
         // ユーザー情報の更新
         this.user = response.data;
 
