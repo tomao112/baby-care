@@ -69,7 +69,7 @@ export interface GrowthRecord {
   memo?: string | null;
   created_at: string;
   updated_at: string;
-} 
+}
 
 export interface DailyRecord {
   id: number;

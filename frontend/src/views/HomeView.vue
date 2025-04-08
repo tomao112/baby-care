@@ -97,9 +97,9 @@ const navigateTo = (path: string) => {
 onMounted(async () => {
   try {
     // ユーザ情報がない場合に取得
-    if(!authStore.user) {
-      await authStore.fetchUser();
-    }
+    // if(!authStore.user) {
+    //   await authStore.fetchUser();
+    // }
   } catch(error) {
     console.error('ユーザ情報の取得に失敗しました:', error);
   } finally {
