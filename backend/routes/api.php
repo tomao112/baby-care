@@ -1,10 +1,10 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\ChildController;
-use App\Http\Controllers\Api\GrowthRecordController;
+use App\Http\Api\Children\ChildController;
+use App\Http\Api\Children\Record\GrowthRecordController;
+use App\Http\Api\Auth\AuthController;
+
 // 認証関連のルート（トークン不要）
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -21,4 +21,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('children/{childId}/growth-records', [GrowthRecordController::class, 'getByChild']);
     Route::post('/growth-records', [GrowthRecordController::class, 'edit']);
     Route::put('/growth-records/{id}', [GrowthRecordController::class, 'update']);
+
+    // 育児記録
+    Route::get('/children/{childId}/daily-records', \App\Http\Api\Children\Record\Daily\Controllers\ShowAction::class);
+    Route::post('/children/{childId}/daily-records', \App\Http\Api\Children\Record\Daily\Controllers\IndexAction::class);
 });
