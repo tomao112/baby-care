@@ -4,7 +4,8 @@ namespace App\Http\Api\Children\Record\Daily\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Services\DailyRecordService;
+use App\Http\Api\Children\Record\Daily\service\DailyRecordService;
+// use App\Services\DailyRecordService as ServicesDailyRecordService;
 
 class IndexAction extends Controller
 {

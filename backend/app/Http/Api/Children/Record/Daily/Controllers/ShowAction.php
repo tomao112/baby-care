@@ -3,7 +3,7 @@
 namespace App\Http\Api\Children\Record\Daily\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Services\DailyRecordService;
+use App\Http\Api\Children\Record\Daily\service\DailyRecordService;
 
 class ShowAction extends Controller
 {
