@@ -79,7 +79,7 @@
             <span>成長記録</span>
           </h3>
           <div class="header-actions">
-            <router-link :to="`/children/${child.id}/growth-records`" class="">
+            <router-link v-if="child?.id" :to="{ name: 'growth-Record', params: { id: child.id.toString() }}" class="">
               <button class="add-record-button">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -89,7 +89,7 @@
               </button>
             </router-link>
             
-            <router-link :to="`/children/${child.id}/growth-records`" class="view-records-button">
+            <router-link v-if="child?.id" :to="{ name: 'growth-Record', params: { id: child.id.toString() }}" class="view-records-button">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14"></path>
                 <path d="M12 5l7 7-7 7"></path>
@@ -105,7 +105,7 @@
             <p class="empty-title">まだ成長記録がありません</p>
             <p class="empty-description">「記録を追加」ボタンから記録を始めましょう</p>
             
-            <router-link :to="`/children/${child.id}/growth-records`" class="mobile-view-records-button">
+            <router-link v-if="child?.id" :to="{ name: 'growth-Record', params: { id: child.id.toString() }}" class="mobile-view-records-button">
               すべての記録を見る
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M5 12h14"></path>
@@ -356,8 +356,33 @@ const deleteEvent = async (event: CalendarEvent, index: number) => {
   }
   
   try {
-    // TODO: APIを使って実際に削除する処理を実装
-    // await childrenStore.deleteEvent(event.id);
+    // APIを使って実際に削除する
+    // 注意: ここではAPIから返された記録IDが必要です
+    // 現状の実装では各イベントにIDがないため、実際の環境では調整が必要です
+    // 例: selectedDayEvents.value[index].id を使うなど
+    
+    // 仮の実装: 現在の選択日の記録をすべて取得してインデックスで削除
+    if (child.value) {
+      // その日付の記録を取得
+      const dateStr = selectedDate.value;
+      const response = await childrenStore.fetchDailyRecordByMonth(
+        child.value.id.toString(),
+        parseInt(dateStr.split('-')[0]), // 年
+        parseInt(dateStr.split('-')[1])  // 月
+      );
+      
+      // 同じ日付の記録をフィルタリング
+      const dailyRecords = response.data.filter(
+        record => record.record_date.startsWith(dateStr)
+      );
+      
+      if (dailyRecords.length > index) {
+        // インデックスに一致する記録を削除
+        const recordToDelete = dailyRecords[index];
+        await childrenStore.deleteDailyRecord(recordToDelete.id);
+        console.log('記録を削除しました:', recordToDelete);
+      }
+    }
     
     // 画面表示上で削除
     selectedDayEvents.value.splice(index, 1);
@@ -377,6 +402,7 @@ const deleteEvent = async (event: CalendarEvent, index: number) => {
     }
   } catch (err) {
     console.error('イベントの削除に失敗しました:', err);
+    alert('削除できませんでした。もう一度試してください。');
   }
 };
 
@@ -393,31 +419,63 @@ const saveEvent = async () => {
       comment: eventComment.value || ''
     };
     
-    // TODO: APIを使って実際に保存する処理を実装
-    // const response = await childrenStore.createEvent({
-    //   child_id: child.value!.id,
-    //   date: selectedDate.value,
-    //   type: selectedEventType.value,
-    //   comment: eventComment.value
-    // });
-    // newEvent.id = response.data.id;
+    // APIを使って実際に保存する
+    if (child.value) {
+      // スタンプIDをタイプから逆引き
+      const stampIdMap: Record<string, number> = {
+        'poop': 1,     // うんち
+        'milestone': 2, // 記念日
+        'food': 3,     // 離乳食
+      };
+      
+      const stampId = stampIdMap[selectedEventType.value];
+      
+      // APIリクエスト用データ
+      const eventData = {
+        record_date: selectedDate.value,
+        daily_event_stamps_id: stampId,
+        comment: eventComment.value,
+        record_time: new Date().toTimeString().slice(0, 8), // 現在時刻を追加 (HH:MM:SS)
+        child_id: parseInt(child.value.id.toString()) // 数値型のchild_idを明示的に追加
+      };
+      
+      // 保存API呼び出し
+      const response = await childrenStore.createDailyRecord(
+        child.value.id.toString(),
+        eventData
+      );
+      
+      console.log('保存成功:', response.data);
+      
+      // 保存が成功したら、すでに表示されているイベントをクリアしてから追加
+      // 同じ日のイベントが重複して表示されないようにする
+      const currentCalendarDays = calendarDays.value;
+      const selectedDayInCalendar = currentCalendarDays.find(day => day.date === selectedDate.value);
+      
+      if (selectedDayInCalendar) {
+        // その日の同じタイプのイベントをフィルタリング（重複を防ぐ）
+        selectedDayInCalendar.events = selectedDayInCalendar.events.filter(
+          event => event.type !== selectedEventType.value
+        );
+        
+        // 新しいイベントを追加
+        selectedDayInCalendar.events.push(newEvent);
+        selectedDayInCalendar.hasEvent = true;
+        
+        // 選択中の日のイベントも同様に更新
+        selectedDayEvents.value = selectedDayEvents.value.filter(
+          event => event.type !== selectedEventType.value
+        );
+        selectedDayEvents.value.push(newEvent);
+      }
     
-    // 画面表示上で追加
-    selectedDayEvents.value.push(newEvent);
-    
-    // calendarDaysの該当日にも追加
-    const currentCalendarDays = calendarDays.value;
-    const selectedDayInCalendar = currentCalendarDays.find(day => day.date === selectedDate.value);
-    if (selectedDayInCalendar) {
-      selectedDayInCalendar.events.push(newEvent);
-      selectedDayInCalendar.hasEvent = true;
+      // フォームをリセット（ダイアログは閉じない）
+      selectedEventType.value = '';
+      eventComment.value = '';
     }
-    
-    // フォームをリセット（ダイアログは閉じない）
-    selectedEventType.value = '';
-    eventComment.value = '';
   } catch (err) {
     console.error('イベントの保存に失敗しました:', err);
+    alert('保存できませんでした。もう一度試してください。');
   }
 };
 
@@ -555,15 +613,35 @@ onMounted(async () => {
 
 // 子供の更新
 const updateChild = async (formData: ChildsForm) => {
-  if(!child.value) return;
+  if(!child.value || !child.value.id) {
+    console.error('子供のIDが見つかりません');
+    alert('子供のIDが見つかりません。ページを再読み込みしてください。');
+    return;
+  }
+
+  const childId = child.value.id.toString();
+  console.log(`子供ID: ${childId} の情報を更新します`, formData);
 
   formLoading.value = true;
   try {
-    const response = await childrenStore.updateChild(child.value.id, formData);
-    child.value = response.data;
+    const response = await childrenStore.updateChild(childId, formData);
+    
+    // レスポンスデータ処理
+    if (response.data && Object.keys(response.data).length > 0) {
+      child.value = response.data;
+    } else {
+      // レスポンスが空の場合はフォームデータで更新
+      child.value = {
+        ...child.value,
+        ...formData
+      };
+    }
+    
+    console.log('更新後の子供データ:', child.value);
     showEditForm.value = false;
   } catch(err: any) {
     console.error('子供の情報の更新に失敗しました:', err);
+    alert(err.response?.data?.message || '更新に失敗しました。もう一度お試しください。');
   } finally {
     formLoading.value = false;
   }
@@ -1806,8 +1884,8 @@ const formatSelectedDate = (dateStr: string): string => {
 }
 
 .event-type-button:nth-child(2) {
-  background-color: #fff8fc;
-  border-color: #ffc0d8;
+  background-color: #f5fff8;
+  border-color: #a0e0a0;
 }
 
 .event-type-button:nth-child(3) {
@@ -1827,9 +1905,9 @@ const formatSelectedDate = (dateStr: string): string => {
 }
 
 .event-type-button:nth-child(2).active {
-  background-color: #fff5fa;
-  border-color: #ffaad0;
-  box-shadow: 0 2px 4px rgba(255, 170, 208, 0.15);
+  background-color: #efffef;
+  border-color: #a0e0a0;
+  box-shadow: 0 2px 4px rgba(128, 210, 128, 0.2);
 }
 
 .event-type-button:nth-child(3).active {

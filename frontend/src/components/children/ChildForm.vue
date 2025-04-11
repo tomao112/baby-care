@@ -116,6 +116,17 @@ onMounted(() => {
 
 // フォーム送信
 const handleSubmit = () => {
+  // フォームの送信前に必須項目を確認
+  if (!form.name || !form.birth_date) {
+    console.error('必須項目が入力されていません:', form);
+    alert('お名前と生年月日は必須項目です');
+    return;
+  }
+  
+  // フォームデータをコンソールに出力（デバッグ用）
+  console.log('送信するフォームデータ:', { ...form });
+  
+  // 親コンポーネントにイベントを発火
   emit('submit', { ...form });
 };
 </script>

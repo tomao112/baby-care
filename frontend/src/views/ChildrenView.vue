@@ -189,15 +189,35 @@ const editChild = (child: Child) => {
 };
 
 // 子供の更新
-const updateChild = async (FormData: ChildsForm) => {
-  if(!selectedChild.value) return;
+const updateChild = async (formData: ChildsForm) => {
+  if(!selectedChild.value || !selectedChild.value.id) {
+    console.error('更新しようとしている子供のIDが見つかりません', selectedChild.value);
+    alert('子供のIDが見つかりません。ページを再読み込みしてください。');
+    return;
+  }
+
+  const childId = selectedChild.value.id.toString();
+  console.log(`子供ID: ${childId} の情報を更新します`, formData);
 
   formLoading.value = true;
   try {
-    await childrenStore.updateChild(selectedChild.value.id, FormData);
+    const response = await childrenStore.updateChild(childId, formData);
+    console.log('更新成功:', response.data);
+
+    // 選択中の子供データを更新
+    if (response.data && selectedChild.value) {
+      selectedChild.value = {
+        ...selectedChild.value,
+        ...formData,
+        id: selectedChild.value.id
+      };
+    }
+    
     showEditForm.value = false;
-  } catch(error) {
+  } catch(error: any) {
     console.error('子供の更新に失敗しました:', error);
+    const errorMessage = error.response?.data?.message || '子供の情報の更新に失敗しました';
+    alert(`エラー: ${errorMessage}`);
   } finally {
     formLoading.value = false;
   }
@@ -211,11 +231,14 @@ const confirmDelete = (child: Child) => {
 
 // 子供の削除
 const deleteChild = async () => {
-  if(!selectedChild.value) return;
+  if(!selectedChild.value || !selectedChild.value.id) {
+    console.error('子供のIDが見つかりません');
+    return;
+  }
 
   formLoading.value = true;
   try {
-    await childrenStore.deleteChild(selectedChild.value.id);
+    await childrenStore.deleteChild(selectedChild.value.id.toString());
     showDeleteConfirm.value = false;
   } catch(error) {
     console.error('子供の削除に失敗しました:', error);

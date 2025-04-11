@@ -107,28 +107,58 @@ export const useChildrenStore = defineStore('children', {
       this.loading = true;
       this.error = null;
 
+      if (!id) {
+        console.error('updateChild: IDが指定されていません');
+        this.error = 'IDが指定されていません';
+        this.loading = false;
+        throw new Error('Missing required param "id"');
+      }
+
+      const idString = String(id);
+      console.log(`updateChild: ID ${idString} で子供の情報を更新します`, childData);
+
       try {
         const authStore = useAuthStore();
-        const response = await axios.put<Child>(`/children/${id}`, childData, {
+        const response = await axios.put<Child>(`/children/${idString}`, childData, {
           headers: {
             Authorization: `Bearer ${authStore.token}`
           }
         });
 
+        console.log(`updateChild: ID ${idString} の更新に成功しました`, response.data);
+
+        // レスポンスデータが空の場合、childDataを使用
+        const updatedData = Object.keys(response.data).length === 0 ? 
+          { ...childData, id: Number(idString) } : response.data;
+
         // 更新された子供の情報で配列を更新
-        const index = this.children.findIndex(child => child.id === Number(id));
+        const index = this.children.findIndex(child => child.id === Number(idString));
         if(index !== -1) {
-          this.children[index] = response.data;
+          this.children[index] = { 
+            ...this.children[index], 
+            ...updatedData 
+          };
         }
 
-        if(this.currentChild && this.currentChild.id === Number(id)) {
-          this.currentChild = response.data;
+        if(this.currentChild && this.currentChild.id === Number(idString)) {
+          this.currentChild = { 
+            ...this.currentChild, 
+            ...updatedData 
+          };
+        }
+
+        // レスポンスデータが空の場合はマージしたデータを返す
+        if(Object.keys(response.data).length === 0) {
+          response.data = { 
+            ...this.children.find(child => child.id === Number(idString)) 
+          } as Child;
         }
 
         return response;
       } catch(error) {
         const axiosError = error as AxiosError<ErrorResponse>;
         this.error = axiosError.response?.data?.message || 'データの更新に失敗しました';
+        console.error(`updateChild: ID ${idString} の更新に失敗しました`, error);
         throw error;
       } finally {
         this.loading = false;
@@ -159,7 +189,7 @@ export const useChildrenStore = defineStore('children', {
       } catch(error) {
         const axiosError = error as AxiosError<ErrorResponse>;
         this.error = axiosError.response?.data?.message || 'データの削除に失敗しました';
-        throw EvalError;
+        throw error;
       } finally {
         this.loading = false;
       }
@@ -288,6 +318,52 @@ export const useChildrenStore = defineStore('children', {
         }
       });
       return response;
+    },
+
+    async createDailyRecord(childId: string, data: any) {
+      try {
+        const authStore = useAuthStore();
+        // リクエストデータにchild_idを追加
+        const requestData = {
+          ...data,
+          child_id: parseInt(childId) // 文字列から数値に変換
+        };
+        console.log('リクエストデータ:', requestData); // デバッグ用にリクエストデータを表示
+        
+        // URLを元に戻す
+        const response = await axios.post(`/children/${childId}/daily-records`, requestData, {
+          headers: {
+            Authorization: `Bearer ${authStore.token}`
+          }
+        });
+        return response;
+      } catch (error) {
+        console.error('育児記録の作成に失敗しました:', error);
+        if (axios.isAxiosError(error) && error.response) {
+          console.error('サーバーエラー詳細:', error.response.data);
+          this.error = error.response.data.message || '育児記録の作成に失敗しました';
+        } else {
+          this.error = '育児記録の作成に失敗しました';
+        }
+        throw error;
+      }
+    },
+
+    // 育児記録を削除
+    async deleteDailyRecord(recordId: number) {
+      try {
+        const authStore = useAuthStore();
+        const response = await axios.delete(`/daily-records/${recordId}`, {
+          headers: {
+            Authorization: `Bearer ${authStore.token}`
+          }
+        });
+        return response;
+      } catch (error) {
+        console.error('育児記録の削除に失敗しました:', error);
+        this.error = '育児記録の削除に失敗しました';
+        throw error;
+      }
     }
   }
 });

@@ -41,7 +41,7 @@ const routes: Array<RouteRecordRaw> = [
     meta: { requiresAuth: true }
   },
   {
-    path: '/children/:id/growth-Records',
+    path: '/children/:id/growth-records',
     name: 'growth-Record',
     component: GrowthRecord,
     props: true,
