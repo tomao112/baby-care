@@ -44,34 +44,62 @@ defineEmits(['close']);
   align-items: center;
   z-index: 1000;
   animation: fadeIn 0.3s ease;
+  width: 100vw;
+  height: 100vh;
+  box-sizing: border-box;
 }
 
 .modal-container {
   background-color: white;
   border-radius: 1rem;
-  width: 90%;
-  max-width: 30rem;
-  max-height: 90vh;
+  width: 80%;
+  max-width: 24rem;
+  max-height: 80vh;
   overflow-y: auto;
-  box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.15);
+  box-shadow: 0 0.4rem 1.5rem rgba(0, 0, 0, 0.15);
   animation: slideIn 0.3s ease;
+  transform: scale(0.85);
+  transform-origin: center;
+}
+
+/* スクロールバーのスタイル */
+.modal-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-container::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 8px;
+  margin: 4px;
+}
+
+.modal-container::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+}
+
+.modal-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
 }
 
 .modal-header {
-  padding: 1.5rem;
+  padding: 1.2rem;
   border-bottom: 1px solid #f0f0fa;
   display: flex;
   justify-content: space-between;
   align-items: center;
   position: relative;
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  background: linear-gradient(180deg, #ffffff, #fafafa);
 }
 
 .close-button {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
-  width: 2.5rem;
-  height: 2.5rem;
+  top: 0.8rem;
+  right: 0.8rem;
+  width: 2rem;
+  height: 2rem;
   border-radius: 50%;
   background: linear-gradient(135deg, #f0f0fa, #e6e6fa);
   border: none;
@@ -81,7 +109,7 @@ defineEmits(['close']);
   cursor: pointer;
   transition: all 0.3s ease;
   color: #8a8aa8;
-  box-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.05);
+  box-shadow: 0 0.15rem 0.4rem rgba(0, 0, 0, 0.05);
 }
 
 .close-button:hover {
@@ -95,7 +123,9 @@ defineEmits(['close']);
 }
 
 .modal-body {
-  padding: 1.5rem;
+  padding: 1.2rem;
+  border-bottom-left-radius: 1rem;
+  border-bottom-right-radius: 1rem;
 }
 
 @keyframes fadeIn {
@@ -104,26 +134,35 @@ defineEmits(['close']);
 }
 
 @keyframes slideIn {
-  from { transform: translateY(-2rem); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from { transform: translateY(-1.5rem) scale(0.85); opacity: 0; }
+  to { transform: translateY(0) scale(0.85); opacity: 1; }
 }
 
 @media (max-width: 48rem) {
   .modal-container {
-    width: 95%;
+    width: 90%;
     max-width: none;
     border-radius: 0.8rem;
+    transform: scale(0.8);
   }
   
-  .modal-header, .modal-body {
-    padding: 1.2rem;
+  .modal-header {
+    padding: 1rem;
+    border-top-left-radius: 0.8rem;
+    border-top-right-radius: 0.8rem;
+  }
+  
+  .modal-body {
+    padding: 1rem;
+    border-bottom-left-radius: 0.8rem;
+    border-bottom-right-radius: 0.8rem;
   }
   
   .close-button {
-    width: 2.2rem;
-    height: 2.2rem;
-    top: 0.8rem;
-    right: 0.8rem;
+    width: 1.8rem;
+    height: 1.8rem;
+    top: 0.6rem;
+    right: 0.6rem;
   }
 }
 </style>

@@ -334,6 +334,17 @@ const getEventLabel = (type: string): string => {
   return eventType ? eventType.label : '不明なイベント';
 };
 
+// スクロール禁止のための関数を追加
+const disableScroll = () => {
+  // document.body.style.overflow = 'hidden'; の行を削除または次のようにコメントアウト
+  // document.body.style.overflow = 'hidden';
+};
+
+const enableScroll = () => {
+  // document.body.style.overflow = ''; の行を削除または次のようにコメントアウト
+  // document.body.style.overflow = '';
+};
+
 // イベントダイアログを開く関数を修正
 const openEventDialog = (day: CalendarDay) => {
   if (!day.isCurrentMonth) return;
@@ -347,6 +358,9 @@ const openEventDialog = (day: CalendarDay) => {
   eventComment.value = '';
   
   showEventDialog.value = true;
+  
+  // スクロールを禁止
+  disableScroll();
 };
 
 // イベントを削除する関数
@@ -730,6 +744,9 @@ const closeEventDialog = () => {
   showEventDialog.value = false;
   selectedEventType.value = '';
   eventComment.value = '';
+  
+  // スクロールを再開
+  enableScroll();
 };
 
 // currentDate が変わったらデータを再取得
@@ -780,18 +797,20 @@ const formatSelectedDate = (dateStr: string): string => {
 
 <style scoped>
 .child-detail-container {
-  max-width: 60rem;
-  margin: 2rem auto;
-  padding: 0 1.5rem;
+  max-width: 48rem;
+  margin: 1.5rem auto;
+  padding: 0 1.2rem;
+  transform: scale(0.8);
+  transform-origin: top center;
 }
 
 .detail-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 0.8rem;
 }
 
 .title-wrapper {
@@ -799,22 +818,22 @@ const formatSelectedDate = (dateStr: string): string => {
 }
 
 .page-title {
-  font-size: 2rem;
+  font-size: 1.6rem;
   font-weight: 700;
   color: #4a4a68;
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 0.4rem 0;
 }
 
 .title-decoration {
-  height: 0.3rem;
-  width: 4rem;
+  height: 0.25rem;
+  width: 3.2rem;
   background: linear-gradient(90deg, #6a5acd, #9370db);
-  border-radius: 1rem;
+  border-radius: 0.8rem;
 }
 
 .header-actions {
   display: flex;
-  gap: 1rem;
+  gap: 0.8rem;
   align-items: center;
 }
 
@@ -824,8 +843,8 @@ const formatSelectedDate = (dateStr: string): string => {
   text-decoration: none;
   color: #6a5acd;
   font-weight: 600;
-  padding: 0.6rem 1rem;
-  border-radius: 0.5rem;
+  padding: 0.5rem 0.8rem;
+  border-radius: 0.4rem;
   background-color: rgba(106, 90, 205, 0.05);
   transition: all 0.3s ease;
 }
@@ -843,12 +862,12 @@ const formatSelectedDate = (dateStr: string): string => {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
   background: linear-gradient(135deg, #6a5acd, #5a4abf);
   color: white;
   border: none;
-  padding: 0.6rem 1.2rem;
-  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.4rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -909,26 +928,26 @@ const formatSelectedDate = (dateStr: string): string => {
 
 .info-card {
   background-color: white;
-  border-radius: 1rem;
-  box-shadow: 0 0.3rem 1rem rgba(0, 0, 0, 0.08);
+  border-radius: 0.8rem;
+  box-shadow: 0 0.25rem 0.8rem rgba(0, 0, 0, 0.08);
   overflow: hidden;
 }
 
 .card-header {
-  padding: 1.2rem 1.5rem;
+  padding: 1rem 1.2rem;
   border-bottom: 1px solid #f0f0fa;
   background: linear-gradient(135deg, #f8f9ff, #f0f2ff);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-top-left-radius: 1rem;
-  border-top-right-radius: 1rem;
+  border-top-left-radius: 0.8rem;
+  border-top-right-radius: 0.8rem;
 }
 
 .section-title {
   display: flex;
   align-items: center;
-  font-size: 1.3rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: #6a5acd;
   margin: 0;
@@ -953,13 +972,13 @@ const formatSelectedDate = (dateStr: string): string => {
 }
 
 .card-body {
-  padding: 1.5rem;
+  padding: 1.2rem;
 }
 
 .info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: 1.2rem;
 }
 
 .info-item {
@@ -973,31 +992,31 @@ const formatSelectedDate = (dateStr: string): string => {
 }
 
 .info-label {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: #8a8aa8;
   font-weight: 500;
 }
 
 .info-value {
-  font-size: 1.1rem;
+  font-size: 1rem;
   color: #4a4a68;
   font-weight: 500;
 }
 
 .notes-value {
   background-color: #f8f9ff;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  font-size: 1rem;
+  padding: 0.8rem;
+  border-radius: 0.4rem;
+  font-size: 0.95rem;
   white-space: pre-line;
-  min-height: 3rem;
+  min-height: 2.5rem;
 }
 
 .gender-badge {
   display: inline-block;
-  padding: 0.3rem 0.8rem;
-  border-radius: 1rem;
-  font-size: 0.9rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: white;
 }
@@ -1064,8 +1083,10 @@ const formatSelectedDate = (dateStr: string): string => {
 
 @media (max-width: 48rem) {
   .child-detail-container {
-    margin: 1rem;
+    margin: 0.8rem;
     padding: 0;
+    transform: scale(0.75);
+    transform-origin: top center;
   }
   
   .detail-header {
@@ -1492,11 +1513,11 @@ const formatSelectedDate = (dateStr: string): string => {
 }
 
 .calendar-container {
-  padding: 1.5rem;
-  margin-bottom: 2rem;
+  padding: 1.2rem;
+  margin-bottom: 1.5rem;
   background: linear-gradient(135deg, #fff8fd, #f8faff);
-  border-radius: 1.5rem;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  border-radius: 1.2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   border: 1px solid #f0e6ff;
 }
 
@@ -1505,17 +1526,17 @@ const formatSelectedDate = (dateStr: string): string => {
   grid-template-columns: repeat(7, 1fr);
   text-align: center;
   font-weight: bold;
-  margin-bottom: 1rem;
+  margin-bottom: 0.8rem;
   background: rgba(255, 255, 255, 0.8);
-  border-radius: 0.8rem;
-  padding: 0.5rem 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  border-radius: 0.6rem;
+  padding: 0.4rem 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
 }
 
 .weekday {
-  padding: 0.5rem;
+  padding: 0.4rem;
   color: #666;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 700;
   position: relative;
 }
@@ -1531,22 +1552,22 @@ const formatSelectedDate = (dateStr: string): string => {
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 0.8rem;
-  padding: 0.5rem;
+  gap: 0.6rem;
+  padding: 0.4rem;
 }
 
 .calendar-day {
   aspect-ratio: 1;
-  border: 2px solid #eef2ff;
-  border-radius: 1rem;
-  padding: 0.5rem;
+  border: 1.5px solid #eef2ff;
+  border-radius: 0.8rem;
+  padding: 0.4rem;
   background: white;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
   transition: all 0.3s ease;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
   overflow: hidden;
   position: relative;
 }
@@ -1558,129 +1579,7 @@ const formatSelectedDate = (dateStr: string): string => {
 }
 
 .day-number {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #4a4a68;
-  margin-bottom: 0.4rem;
-  background: rgba(255, 255, 255, 0.6);
-  width: 1.8rem;
-  height: 1.8rem;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-}
-
-.calendar-day:hover .day-number {
-  background: rgba(255, 255, 255, 0.8);
-  color: #6a5acd;
-}
-
-.calendar-day.today {
-  border-width: 3px;
-  border-color: #6a5acd;
-  box-shadow: 0 4px 12px rgba(106, 90, 205, 0.2);
-  transform: scale(1.03);
-  z-index: 2;
-}
-
-.calendar-day.today .day-number {
-  background: rgba(106, 90, 205, 0.15);
-  color: #6a5acd;
-  font-weight: 800;
-}
-
-.calendar-grid .calendar-day:nth-child(7n+1) .day-number {
-  color: #ff6b6b;
-}
-
-.calendar-grid .calendar-day:nth-child(7n) .day-number {
-  color: #4dabf7;
-}
-
-.event-icons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.2rem;
-  margin-top: 0.3rem;
-  justify-content: center;
-  max-width: 100%;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 0.5rem;
-  padding: 0.2rem;
-  transition: all 0.3s ease;
-}
-
-.calendar-day:hover .event-icons {
-  background: rgba(255, 255, 255, 0.7);
-  transform: scale(1.05);
-}
-
-.event-icon {
   font-size: 1rem;
-  transition: all 0.2s ease;
-  display: inline-block;
-  margin: 0.05rem;
-  position: relative;
-  opacity: 0.85;
-}
-
-.event-icon.event-poop {
-  filter: drop-shadow(0 1px 2px rgba(255, 192, 0, 0.2));
-}
-
-.event-icon.event-food {
-  filter: drop-shadow(0 1px 2px rgba(0, 160, 255, 0.2));
-}
-
-.event-icon.event-milestone {
-  filter: drop-shadow(0 1px 2px rgba(128, 210, 128, 0.3));
-}
-
-.more-events {
-  background: rgba(106, 90, 205, 0.2);
-  border-radius: 50%;
-  padding: 0.1rem 0.3rem;
-  font-size: 0.75rem;
-  color: #6a5acd;
-  font-weight: bold;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.month-selector {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  background: white;
-  padding: 0.5rem 1rem;
-  border-radius: 2rem;
-  box-shadow: 0 3px 8px rgba(106, 90, 205, 0.1);
-  border: 1px solid #f0e6ff;
-}
-
-.month-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.2rem;
-  height: 2.2rem;
-  border: 1px solid #f0e6ff;
-  border-radius: 50%;
-  background: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  color: #6a5acd;
-}
-
-.month-button:hover {
-  background: linear-gradient(135deg, #f0f2ff, #e6e9ff);
-  border-color: #6a5acd;
-  color: #6a5acd;
-}
-
-.current-month {
-  font-size: 1.2rem;
   font-weight: 700;
   color: #4a4a68;
   min-width: 8rem;
@@ -1844,9 +1743,13 @@ const formatSelectedDate = (dateStr: string): string => {
   padding: 1.2rem;
   width: 90%;
   max-width: 500px;
-  max-height: 70vh;
+  max-height: 80vh;
   overflow-y: auto;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  position: relative;
+  margin: auto;
+  overscroll-behavior: contain;
+  scroll-padding-top: 1.2rem;
 }
 
 .dialog-title {
@@ -1985,12 +1888,13 @@ const formatSelectedDate = (dateStr: string): string => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: transparent;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   z-index: 1000;
   padding: 1rem;
+  padding-top: calc(100vh - -200px);
 }
 
 .calendar-day.has-poop:not(.has-food):not(.has-milestone) {
@@ -2035,5 +1939,67 @@ const formatSelectedDate = (dateStr: string): string => {
 
 .event-icon.event-milestone {
   filter: drop-shadow(0 1px 2px rgba(128, 210, 128, 0.3));
+}
+
+.month-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  background: white;
+  padding: 0.4rem 0.8rem;
+  border-radius: 1.6rem;
+  box-shadow: 0 2px 6px rgba(106, 90, 205, 0.1);
+  border: 1px solid #f0e6ff;
+}
+
+.month-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  border: 1px solid #f0e6ff;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #6a5acd;
+}
+
+.month-button:hover {
+  background: linear-gradient(135deg, #f0f2ff, #e6e9ff);
+  border-color: #6a5acd;
+  color: #6a5acd;
+}
+
+.current-month {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #4a4a68;
+  min-width: 6.4rem;
+  text-align: center;
+  background: linear-gradient(90deg, #6a5acd, #9370db);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* スクロールバーのスタイル */
+.dialog-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dialog-content::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 8px;
+  margin: 4px;
+}
+
+.dialog-content::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+}
+
+.dialog-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
 }
 </style>
