@@ -257,24 +257,33 @@ export const useChildrenStore = defineStore('children', {
 
     // 成長記録を更新する
     async updateGrowthRecord(id: number, data: any): Promise<AxiosResponse<GrowthRecord>> {
+      console.log(`ID: ${id}のレコードを更新します。データ:`, data);
+      
       this.loading = true;
       this.error = null;
-
+      
       try {
+        // 認証トークンを取得
         const authStore = useAuthStore();
-        console.log('認証トークン:', authStore.token?.substring(0, 10) + '...');
         
+        // axiosインスタンスを直接使用せず、axiosを使用
         const response = await axios.put<GrowthRecord>(`/growth-records/${id}`, data, {
           headers: {
             Authorization: `Bearer ${authStore.token}`
           }
         });
+        
+        console.log('更新レスポンス:', response);
         return response;
       } catch (error) {
-        const axiosError = error as AxiosError<ErrorResponse>;
-        console.error('APIエラー詳細:', axiosError.response?.data);
-        this.error = axiosError.response?.data?.message || '記録の更新に失敗しました';
         console.error('記録の更新に失敗しました:', error);
+        if (axios.isAxiosError(error) && error.response) {
+          console.error('エラーステータス:', error.response.status);
+          console.error('エラーデータ:', error.response.data);
+          this.error = error.response.data?.message || '記録の更新に失敗しました';
+        } else {
+          this.error = '記録の更新に失敗しました';
+        }
         throw error;
       } finally {
         this.loading = false;
@@ -350,10 +359,11 @@ export const useChildrenStore = defineStore('children', {
     },
 
     // 育児記録を削除
-    async deleteDailyRecord(recordId: number) {
+    async deleteDailyRecord(childId: string, id: number) {
       try {
         const authStore = useAuthStore();
-        const response = await axios.delete(`/daily-records/${recordId}`, {
+        // URLのパスを修正 - スラッシュが先頭にない
+        const response = await axios.delete(`/children/${childId}/daily-records/${id}`, {
           headers: {
             Authorization: `Bearer ${authStore.token}`
           }

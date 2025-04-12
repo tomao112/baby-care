@@ -127,10 +127,11 @@
               
               <!-- 月ごとのカード表示 -->
               <div class="record-cards">
+                <!-- v-forのitemに明示的な型を付与することでTypeScriptエラーを解消 -->
                 <div v-for="(record, index) in visibleRecords" :key="index" class="record-card" :class="{'empty-card': record.isEmpty}">
                   <div class="record-date">
-                    <div class="date-bubble">{{ getMonthName(record.date) }}</div>
-                    <div class="date-year">{{ getYear(record.date) }}</div>
+                    <div class="date-bubble">{{ getMonthName(record.date || record.record_date) }}</div>
+                    <div class="date-year">{{ getYear(record.date || record.record_date) }}</div>
                   </div>
                   <div class="record-content">
                     <div class="record-age">{{ calculateAge(child?.birth_date, record.date) }}</div>
@@ -187,7 +188,7 @@
           </div>
           
           <!-- その他のタブコンテンツ -->
-          <div v-else class="coming-soon-content">
+          <div v-else-if="activeTab !== 'physical'" class="coming-soon-content">
             <div class="coming-soon-icon">✨</div>
             <p class="coming-soon-text">準備中です</p>
             <p class="coming-soon-description">この機能は近日公開予定です</p>
@@ -222,15 +223,24 @@
                 <div class="form-icon">📏</div>
                 <div class="form-title">
                   <h4>身体測定データを記録</h4>
-                  <p>{{ child?.name || 'お子さま' }}の成長を記録しましょう</p>
+                  <p>{{ child ? child.name : 'お子さま' }}の成長を記録しましょう</p>
                 </div>
               </div>
 
               <div class="form-grid">
                 <div class="form-group date-group">
-                  <label for="record-date">記録日 <span class="required">*</span></label>
+                  <label for="record-year-month">記録年月</label>
                   <div class="input-with-icon">
-                    <input type="date" id="record-date" v-model="formData.date" required class="form-input">
+                    <input 
+                      type="month" 
+                      id="record-year-month" 
+                      v-model="formData.year_month" 
+                      required 
+                      class="form-input disabled-input"
+                      :disabled="true"
+                      :title="'月ごとの記録です'"
+                    >
+                    <div class="fixed-date-notice">月ごとの記録</div>
                   </div>
                 </div>
                 
@@ -332,15 +342,24 @@
                 <div class="form-icon">📏</div>
                 <div class="form-title">
                   <h4>身体測定データを記録</h4>
-                  <p>{{ child?.name || 'お子さま' }}の成長を記録しましょう</p>
+                  <p>{{ child ? child.name : 'お子さま' }}の成長を記録しましょう</p>
                 </div>
               </div>
 
               <div class="form-grid">
                 <div class="form-group date-group">
-                  <label for="record-date">記録日 <span class="required">*</span></label>
+                  <label for="record-year-month">記録年月</label>
                   <div class="input-with-icon">
-                    <input type="date" id="record-date" v-model="formData.date" required class="form-input">
+                    <input 
+                      type="month" 
+                      id="record-year-month" 
+                      v-model="formData.year_month" 
+                      required 
+                      class="form-input disabled-input"
+                      :disabled="true"
+                      :title="'月ごとの記録です'"
+                    >
+                    <div class="fixed-date-notice">月ごとの記録</div>
                   </div>
                 </div>
                 
@@ -411,7 +430,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useChildrenStore } from '@/stores/children';
 import { Child, ChildsForm, GrowthRecord } from '@/types';
@@ -432,20 +451,114 @@ const activeFormTab = ref('physical'); // フォーム用タブ
 const isEditMode = ref(false);
 const editingRecordId = ref<number | null>(null);
 
-// GrowthRecordの拡張型
-type ExtendedGrowthRecord = GrowthRecord & {
+// GrowthRecordの拡張型定義
+interface ExtendedGrowthRecord extends GrowthRecord {
   isEmpty?: boolean;
-  record_date?: string; // record_dateプロパティを追加
-};
+  record_date?: string;
+}
 
 // 子供の情報
-type ChildWithRecords = Child & { growth_records?: ExtendedGrowthRecord[] };
+interface ChildWithRecords extends Child {
+  growth_records?: ExtendedGrowthRecord[];
+}
+
 const child = ref<ChildWithRecords | null>(null);
 
 const month = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
 
-// 表示制限の初期値を増やす
-const displayLimit = ref(6); // 初期表示を6ヶ月分に増やす
+// 表示制限の初期値
+const displayLimit = ref(6);
+
+// 日本の現在「年月」のみを取得する関数
+const getCurrentYearMonth = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+};
+
+// フォームデータの型
+interface GrowthRecordForm {
+  year_month: string; // 年月のみの形式 (YYYY-MM)
+  height: number | null;
+  weight: number | null;
+  memo: string;
+}
+
+// フォームデータの初期化
+const formData = ref<GrowthRecordForm>({
+  year_month: getCurrentYearMonth(),
+  height: null,
+  weight: null,
+  memo: ''
+});
+
+// モーダル表示フラグ
+const showFormModal = ref(false);
+
+// 月名を取得する関数（型を修正）
+const getMonthName = (dateString: string | undefined): string => {
+  if (!dateString) {
+    console.warn('日付が空です');
+    return '';
+  }
+  
+  try {
+    const date = new Date(dateString);
+    
+    if (isNaN(date.getTime())) {
+      console.warn('無効な日付:', dateString);
+      return '';
+    }
+    
+    return `${date.getMonth() + 1}月`;
+  } catch (err) {
+    console.error('日付解析エラー:', err);
+    return '';
+  }
+};
+
+// 年を取得する関数（型を修正）
+const getYear = (dateString: string | undefined): string => {
+  if (!dateString) {
+    console.warn('年を取得する日付が空です');
+    return '';
+  }
+  
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      console.warn('無効な日付（年）:', dateString);
+      return '';
+    }
+    return date.getFullYear().toString();
+  } catch (err) {
+    console.error('年の解析エラー:', err);
+    return '';
+  }
+};
+
+// 記録データの正規化関数
+const normalizeRecordDate = (record: any): ExtendedGrowthRecord => {
+  // dateフィールドがなくてrecord_dateがある場合
+  if (!record.date && record.record_date) {
+    return {
+      ...record,
+      date: record.record_date
+    };
+  }
+  
+  // record_dateフィールドがなくてdateがある場合
+  if (!record.record_date && record.date) {
+    return {
+      ...record,
+      record_date: record.date
+    };
+  }
+  
+  // 両方あるか両方ない場合はそのまま返す
+  return record as ExtendedGrowthRecord;
+};
 
 // もっと見るボタンのテキスト
 const moreButtonText = computed(() => {
@@ -460,7 +573,7 @@ const hasRecords = computed(() => {
   return child.value?.growth_records && child.value.growth_records.length > 0;
 });
 
-// 誕生月から現在までの全ての月のデータを生成
+// 誕生月から現在までの全ての月のデータ生成
 const getAllMonthsData = computed((): ExtendedGrowthRecord[] => {
   if (!child.value || !child.value.birth_date) {
     return [];
@@ -492,16 +605,34 @@ const getAllMonthsData = computed((): ExtendedGrowthRecord[] => {
     const targetMonth = targetDate.getMonth();
     
     // この年月にデータがあるか探す
-    const existingRecord = child.value.growth_records?.find(record => {
-      // 日付フィールドを確実に取得
-      const recordDate = new Date(record.date || (record as any).record_date);
-      return recordDate.getMonth() === targetMonth && 
-             recordDate.getFullYear() === targetYear;
+    const existingRecord = child.value.growth_records?.find((record: ExtendedGrowthRecord) => {
+      // date または record_date のどちらかを使用（型アサーションを使用）
+      const recordDateStr = record.date || record.record_date || '';
+      
+      if (!recordDateStr) {
+        console.warn('日付のないレコード:', record);
+        return false;
+      }
+      
+      try {
+        const recordDate = new Date(recordDateStr);
+        // 年月の比較
+        return recordDate.getMonth() === targetMonth && 
+               recordDate.getFullYear() === targetYear;
+      } catch (err) {
+        console.error('日付解析エラー:', recordDateStr, err);
+        return false;
+      }
     });
     
     if (existingRecord) {
       // 既存データがあればそれを使用
-      result.push(existingRecord as ExtendedGrowthRecord);
+      // date フィールドを確実に持つように
+      const recordWithDate = {
+        ...existingRecord,
+        date: existingRecord.date || (existingRecord as any).record_date
+      };
+      result.push(recordWithDate as ExtendedGrowthRecord);
     } else {
       // データがなければ空のカードを作成
       result.push({
@@ -520,8 +651,8 @@ const getAllMonthsData = computed((): ExtendedGrowthRecord[] => {
   
   // 新しい月から古い月の順にソート（降順）
   return result.sort((a, b) => {
-    const dateA = new Date(a.date);
-    const dateB = new Date(b.date);
+    const dateA = new Date(a.date || '');
+    const dateB = new Date(b.date || '');
     // 年の比較を先に行い、同じ年なら月を比較（降順）
     if (dateB.getFullYear() !== dateA.getFullYear()) {
       return dateB.getFullYear() - dateA.getFullYear();
@@ -530,7 +661,7 @@ const getAllMonthsData = computed((): ExtendedGrowthRecord[] => {
   });
 });
 
-// 表示用のデータ（件数制限あり）を型指定
+// 表示用のデータ（件数制限あり）
 const visibleRecords = computed((): ExtendedGrowthRecord[] => {
   const records = getAllMonthsData.value;
   if (displayLimit.value === -1) {
@@ -539,13 +670,13 @@ const visibleRecords = computed((): ExtendedGrowthRecord[] => {
   return records.slice(0, displayLimit.value);
 });
 
-// hasMoreRecordsの修正
+// hasMoreRecords
 const hasMoreRecords = computed(() => {
   return getAllMonthsData.value.length > displayLimit.value && displayLimit.value !== -1;
 });
 
 // 子供の年齢を計算（例: 1歳3ヶ月）
-const calculateAge = (birthDate: string, recordDate: string) => {
+const calculateAge = (birthDate: string | undefined, recordDate: string | undefined): string => {
   if (!birthDate || !recordDate) return '年齢不明';
   
   const birth = new Date(birthDate);
@@ -565,7 +696,7 @@ const calculateAge = (birthDate: string, recordDate: string) => {
   }
 };
 
-// 初期データの読み込み
+// onMountedフックを修正
 onMounted(async () => {
   loading.value = true;
   const childId = route.params.id;
@@ -579,28 +710,31 @@ onMounted(async () => {
     const response = await childrenStore.fetchChild(childId.toString());
     child.value = response.data;
     
+    console.log('子供の情報:', child.value);
+    
     // 成長記録を取得
-    const recordsResponse = await childrenStore.fetchGrowthRecord(childId.toString());
-    
-    // レスポンスの形式を確認
-    console.log("成長記録レスポンス:", recordsResponse);
-    
-    if (recordsResponse && recordsResponse.data) {
-      // レスポンスデータのフィールド名を確認して標準化
-      const normalizedRecords = recordsResponse.data.map(record => {
-        // もしrecord_dateフィールドがあればdateフィールドに変換
-        if ((record as any).record_date && !record.date) {
-          return {
-            ...record,
-            date: (record as any).record_date
-          };
-        }
-        return record;
-      });
+    try {
+      const recordsResponse = await childrenStore.fetchGrowthRecord(childId.toString());
       
-      child.value.growth_records = normalizedRecords;
-      console.log("標準化した成長記録:", child.value.growth_records);
-    } else {
+      if (recordsResponse && recordsResponse.data) {
+        // 最初のレコードの構造を確認
+        if (recordsResponse.data.length > 0) {
+          console.log('最初のレコード構造:', recordsResponse.data[0]);
+        }
+        
+        // データを正規化
+        child.value.growth_records = recordsResponse.data.map(normalizeRecordDate);
+        
+        // 正規化後の確認
+        if (child.value.growth_records && child.value.growth_records.length > 0) {
+          console.log('正規化後の最初のレコード:', child.value.growth_records[0]);
+        }
+      } else {
+        child.value.growth_records = [];
+      }
+    } catch (recordErr: any) {
+      console.error('成長記録の取得でエラー:', recordErr);
+      console.error('エラー詳細:', recordErr.response?.data);
       child.value.growth_records = [];
     }
     
@@ -613,28 +747,144 @@ onMounted(async () => {
   } finally {
     loading.value = false;
   }
+  
+  formData.value.year_month = getCurrentYearMonth();
 });
 
-// フォームのリセット
+// モーダルを開く関数を修正
+const openModal = (yearMonth?: string) => {
+  console.log(`モーダルを開きます。編集モード:${isEditMode.value}, 指定年月:${yearMonth || '無し'}`);
+  
+  // 編集モードの場合は、既存の年月をそのまま使用
+  if (!isEditMode.value) {
+    if (yearMonth) {
+      // 特定の年月が指定された場合
+      formData.value.year_month = yearMonth;
+      console.log('指定された年月をセット:', yearMonth);
+    } else {
+      // 新規追加で年月が指定されていない場合は現在の年月を使用
+      formData.value.year_month = getCurrentYearMonth();
+      console.log('現在の年月をセット:', formData.value.year_month);
+    }
+  } else {
+    // 編集モードの場合は既存の年月をそのまま維持（変更しない）
+    console.log('編集モード: 既存の年月を維持:', formData.value.year_month);
+  }
+  
+  // モーダル表示
+  document.body.classList.add('modal-open');
+  showFormModal.value = true;
+};
+
+// モーダルを閉じる関数
+const closeModal = () => {
+  document.body.classList.remove('modal-open');
+  showFormModal.value = false;
+  
+  isEditMode.value = false;
+  editingRecordId.value = null;
+};
+
+// 特定の年月の記録を追加する関数
+const addRecord = (dateString: string | undefined) => {
+  if (!dateString) return;
+  
+  // 日付から年月のみを抽出 (YYYY-MM-DD -> YYYY-MM)
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      console.warn('無効な日付:', dateString);
+      return;
+    }
+    
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const yearMonth = `${year}-${month}`;
+    
+    formData.value.year_month = yearMonth;
+    openModal(yearMonth);
+  } catch (err) {
+    console.error('日付解析エラー:', err);
+  }
+};
+
+// showMoreRecords関数
+const showMoreRecords = () => {
+  if (displayLimit.value === -1) {
+    displayLimit.value = 6;
+  } else {
+    displayLimit.value = -1;
+  }
+};
+
+// 編集ボタンの処理
+const editRecord = (id: number) => {
+  console.log(`ID:${id}の記録を編集します`);
+  
+  // 型を明確に
+  const recordToEdit = child.value?.growth_records?.find(
+    (record): record is ExtendedGrowthRecord => record.id === id
+  );
+  
+  if (recordToEdit) {
+    console.log('編集対象の記録:', recordToEdit);
+    
+    isEditMode.value = true;
+    editingRecordId.value = Number(id);
+    
+    // 数値型の確認
+    const height = typeof recordToEdit.height === 'number' ? recordToEdit.height : null;
+    const weight = typeof recordToEdit.weight === 'number' ? recordToEdit.weight : null;
+    
+    // 記録の年月を取得
+    let yearMonth = '';
+    const recordDate = recordToEdit.date || (recordToEdit as any).record_date || '';
+    
+    if (recordDate) {
+      try {
+        const date = new Date(recordDate);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        yearMonth = `${year}-${month}`;
+      } catch (err) {
+        console.error('日付解析エラー:', err);
+        yearMonth = getCurrentYearMonth();
+      }
+    }
+    
+    // フォームデータをセット
+    formData.value = {
+      year_month: yearMonth,
+      height: height,
+      weight: weight,
+      memo: recordToEdit.memo || ''
+    };
+    
+    console.log('フォームデータをセット:', formData.value);
+    
+    // 編集モードでモーダルを開く
+    openModal();
+  } else {
+    console.error(`ID:${id}の記録が見つかりません`);
+  }
+};
+
+// フォームのリセット関数を修正
 const resetForm = () => {
   formData.value = {
-    date: new Date().toISOString().split('T')[0],
+    year_month: getCurrentYearMonth(),
     height: null,
     weight: null,
     memo: ''
   };
 };
 
-// フォームの送信
+// フォームの送信処理を修正
 const submitForm = async () => {
   formSubmitting.value = true;
   
   try {
     // バリデーション
-    if (!formData.value.date) {
-      throw new Error('日付を入力してください');
-    }
-    
     if (!formData.value.height) {
       throw new Error('身長を入力してください');
     }
@@ -643,72 +893,81 @@ const submitForm = async () => {
       throw new Error('体重を入力してください');
     }
     
-    // APIに送信するデータの準備 - フィールド名を変更
-    const submitData: {
-      child_id?: number;
-      record_date: string;
-      height: number;
-      weight: number;
-      memo: string;
-      id?: number; // idフィールドを追加
-    } = {
-      child_id: child.value?.id,
-      record_date: formData.value.date,
-      height: formData.value.height as number, // nullはバリデーションで除外済み
-      weight: formData.value.weight as number, // nullはバリデーションで除外済み
-      memo: formData.value.memo
-    };
-    
-    // console.log('認証トークン確認:', !!childrenStore.token);
-    
-    let response;
-    
-    // 編集モードか新規作成モードかで処理を分岐
+    // 更新と新規作成で異なる処理
     if (isEditMode.value && editingRecordId.value) {
+      // 更新時はrecord_dateを送信しない（既存の日付を保持するため）
+      const submitData = {
+        child_id: child.value?.id,
+        // record_date: フィールドを省略
+        height: formData.value.height as number,
+        weight: formData.value.weight as number,
+        memo: formData.value.memo || ''
+      };
+      
+      console.log('更新データ (日付を含まない):', submitData);
+      
       try {
-        // 編集モード：更新API呼び出し - createではなくupdateを使う
-        response = await childrenStore.updateGrowthRecord(editingRecordId.value, submitData);
-        console.log('更新成功:', response.data);
-      } catch (error) {
-        console.error('API呼び出し中のエラー:', error);
-        throw error;
+        const response = await childrenStore.updateGrowthRecord(editingRecordId.value, submitData);
+        console.log('更新成功:', response);
+      } catch (updateErr) {
+        console.error('更新エラー:', updateErr);
+        throw updateErr;
       }
     } else {
-      // 新規作成モード
-      response = await childrenStore.createGrowthRecord(submitData);
-      console.log('保存成功:', response.data);
+      // 新規作成時は年月から日付を生成
+      // APIに送信するデータの準備
+      const yearMonthParts = formData.value.year_month.split('-');
+      const year = parseInt(yearMonthParts[0]);
+      const month = parseInt(yearMonthParts[1]);
+      
+      // その月の末日を取得 (翌月の0日 = 当月の末日)
+      const lastDay = new Date(year, month, 0).getDate();
+      const record_date = `${formData.value.year_month}-${String(lastDay).padStart(2, '0')}`;
+      
+      const submitData = {
+        child_id: child.value?.id,
+        record_date: record_date, // 年月の末日をセット
+        height: formData.value.height as number,
+        weight: formData.value.weight as number,
+        memo: formData.value.memo || ''
+      };
+      
+      console.log('新規作成データ:', submitData);
+      
+      try {
+        const response = await childrenStore.createGrowthRecord(submitData);
+        console.log('作成成功:', response);
+      } catch (createErr) {
+        console.error('作成エラー:', createErr);
+        throw createErr;
+      }
     }
     
-    // 成功時の処理
+    // 成功後の処理
     resetForm();
     closeModal();
     
     // 最新データを再取得
-    const childId = route.params.id;
-    if (childId && child.value) {
-      const response = await childrenStore.fetchGrowthRecord(childId.toString());
-      
-      // データを標準化
-      if (response && response.data) {
-        const normalizedRecords = response.data.map(record => {
-          if ((record as any).record_date && !record.date) {
-            return {
-              ...record,
-              date: (record as any).record_date
-            };
-          }
-          return record;
-        });
+    if (route.params.id && child.value) {
+      console.log('成長記録を再取得します');
+      try {
+        const recordsResponse = await childrenStore.fetchGrowthRecord(route.params.id.toString());
         
-        child.value.growth_records = normalizedRecords;
-        console.log("更新後の成長記録:", child.value.growth_records);
+        if (recordsResponse && recordsResponse.data) {
+          console.log('取得した成長記録:', recordsResponse.data);
+          
+          // データを正規化して日付フィールドを確実に持つようにする
+          child.value.growth_records = recordsResponse.data.map(record => normalizeRecordDate(record));
+        }
+      } catch (fetchErr) {
+        console.error('記録の再取得に失敗:', fetchErr);
       }
     }
     
   } catch (err: any) {
-    console.error('記録の保存に失敗しました:', err);
+    console.error('送信エラー:', err);
     if (err.response) {
-      console.error('エラーレスポンス:', err.response.data);
+      console.error('エラー詳細:', err.response.data);
     }
     alert(err.message || '記録の保存に失敗しました');
   } finally {
@@ -740,109 +999,21 @@ const deleteRecord = async (id: number) => {
   }
 };
 
-// 月を日本語で取得する関数
-const getMonthName = (dateString: string) => {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  return `${date.getMonth() + 1}月`;
-};
-
-// 年を取得する関数
-const getYear = (dateString: string) => {
-  if (!dateString) return '';
-  return new Date(dateString).getFullYear();
-};
-
-// フォームデータの型
-interface GrowthRecordForm {
-  date: string;
-  height: number | null;
-  weight: number | null;
-  memo: string;
-}
-
-// フォームデータ
-const formData = ref<GrowthRecordForm>({
-  date: new Date().toISOString().split('T')[0], // 今日の日付をデフォルトに
-  height: null,
-  weight: null,
-  memo: ''
+// watch関数の修正 - 編集モードの時は日付を上書きしない
+watch(() => showFormModal.value, (isOpen) => {
+  if (isOpen && !isEditMode.value && !formData.value.year_month) {
+    // モーダルが開いたとき、編集モードでなく日付が空の場合のみ現在日を設定
+    formData.value.year_month = getCurrentYearMonth();
+  }
 });
 
-// モーダル表示フラグ
-const showFormModal = ref(false);
-
-// モーダルを開く関数
-const openModal = (date?: string) => {
-  // 編集モードでない場合のみ、日付を設定
-  if (!isEditMode.value) {
-    if (date) {
-      formData.value.date = date;
-    } else {
-      // 今日の日付をセット
-      formData.value.date = new Date().toISOString().split('T')[0];
-    }
+// TypeScript エラーを修正するため、DOM要素へのアクセス方法を修正
+setTimeout(() => {
+  const dateInputs = document.querySelectorAll('input[type="date"]');
+  if (dateInputs && dateInputs.length > 0) {
+    console.log('日付フィールドの値:', (dateInputs[0] as HTMLInputElement).value);
   }
-  
-  showFormModal.value = true;
-};
-
-// モーダルを閉じる関数
-const closeModal = () => {
-  showFormModal.value = false;
-  
-  // 編集モードをリセット
-  isEditMode.value = false;
-  editingRecordId.value = null;
-};
-
-// 特定の日付の記録を追加する関数を修正
-const addRecord = (date: string) => {
-  // 追加フォームに日付をセット
-  formData.value.date = date;
-  // モーダルを開く
-  openModal(date);
-};
-
-// showMoreRecords関数の追加（もっと見るボタンの機能）
-const showMoreRecords = () => {
-  if (displayLimit.value === -1) {
-    // すでに全て表示している場合は3件に戻す
-    displayLimit.value = 3;
-  } else {
-    // まだ全て表示していない場合は全て表示
-    displayLimit.value = -1;
-  }
-};
-
-// 編集ボタンの処理
-const editRecord = (id: number) => {
-  console.log('編集開始 - ID:', id, '型:', typeof id);
-  
-  // 編集対象の記録を見つける
-  const recordToEdit = child.value?.growth_records?.find(record => record.id === id);
-  
-  if (recordToEdit) {
-    console.log('編集対象のレコード:', recordToEdit);
-    // 編集モードをオン
-    isEditMode.value = true;
-    editingRecordId.value = Number(id); // 確実に数値型に変換
-    
-    // フォームに値をセット
-    formData.value = {
-      date: recordToEdit.date || (recordToEdit as any).record_date || '',
-      height: recordToEdit.height ?? null,
-      weight: recordToEdit.weight ?? null,
-      memo: recordToEdit.memo || ''
-    };
-    console.log('フォームデータを設定:', formData.value);
-    
-    // モーダルを開く
-    openModal();
-  } else {
-    console.error('編集対象のレコードが見つかりません - ID:', id);
-  }
-};
+}, 100);
 </script>
 
 <style scoped>
@@ -1381,17 +1552,17 @@ const editRecord = (id: number) => {
 .growth-record-form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.8rem;
 }
 
 .form-header {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 1rem;
+  padding: 1.2rem;
+  margin-bottom: 1.5rem;
   background-color: #f8f9ff;
   border-radius: 0.8rem;
-  margin-bottom: 1rem;
 }
 
 .form-icon {
@@ -1490,7 +1661,8 @@ const editRecord = (id: number) => {
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
-  margin-top: 1rem;
+  margin-top: 1.8rem;
+  padding-bottom: 0.5rem;
 }
 
 .reset-button {
@@ -1592,35 +1764,26 @@ const editRecord = (id: number) => {
 .modal-container {
   background-color: white;
   border-radius: 1rem;
-  width: 80%;
-  max-width: 40rem;
-  max-height: 80vh;
+  width: 70%;
+  max-width: 35rem;
+  max-height: 75vh;
   overflow-y: auto;
   box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.2);
   animation: slideIn 0.3s ease;
+  padding-bottom: 1.2rem;
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.2rem 1.5rem;
+  padding: 1rem 1.2rem;
   border-bottom: 1px solid #f0f0fa;
   background-color: #f8f9ff;
 }
 
 .modal-title {
-  display: flex;
-  align-items: center;
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #4a4a68;
-  margin: 0;
-}
-
-.modal-title svg {
-  margin-right: 0.8rem;
-  color: #6a5acd;
+  font-size: 1.1rem;
 }
 
 .modal-close-button {
@@ -1642,7 +1805,9 @@ const editRecord = (id: number) => {
 }
 
 .modal-body {
-  padding: 1.2rem;
+  padding: 1.2rem 1rem;
+  max-height: calc(75vh - 5rem);
+  overflow-y: auto;
 }
 
 @keyframes fadeIn {
@@ -1684,4 +1849,78 @@ input[type=number]::-webkit-outer-spin-button {
 input[type=number] {
   -moz-appearance: textfield; /* Firefox用 */
 }
+
+/* モーダルがはみ出さないようにする修正 */
+@media (max-width: 768px) {
+  .modal-container {
+    width: 90%;
+    max-height: 85vh;
+  }
+  
+  .modal-body {
+    padding: 1rem 0.8rem;
+  }
+  
+  .form-grid {
+    gap: 0.8rem;
+  }
+  
+  .form-header {
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+  }
+  
+  .form-input, .form-textarea {
+    font-size: 15px;
+    padding: 0.6rem;
+  }
+}
+
+/* 入力ヒントも小さく */
+.input-hint {
+  font-size: 0.75rem;
+}
+
+/* ページ全体のスクロール禁止（モーダル表示時） */
+body.modal-open {
+  overflow: hidden;
+}
+
+/* フォームグループ間の間隔調整 */
+.growth-record-form .form-group {
+  margin-bottom: 0.5rem;
+}
+
+/* スマホでのタップ領域を広げる */
+.form-tabs .tab-button {
+  min-height: 2.5rem;
+}
+
+.fixed-date-notice {
+  font-size: 0.8rem;
+  color: #8a8aa8;
+  margin-top: 0.5rem;
+}
+
+/* 既存のスタイルに追加 */
+
+.disabled-input {
+  background-color: #f5f5f5;
+  color: #666;
+  border-color: #e0e0e0;
+  cursor: not-allowed;
+}
+
+.fixed-date-notice {
+  position: absolute;
+  right: 1rem;
+  font-size: 0.8rem;
+  color: #888;
+  background-color: #efefef;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.4rem;
+  pointer-events: none;
+}
+
+/* この行は既存のスタイルの終わりに追加してください */
 </style>

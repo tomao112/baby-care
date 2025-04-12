@@ -83,7 +83,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, onMounted, computed } from 'vue';
+import { reactive, onMounted, computed, watch, nextTick } from 'vue';
 import { Child, ChildsForm as ChildFormType } from '@/types';
 
 const props = defineProps<{
@@ -106,6 +106,7 @@ const form = reactive<ChildFormType>({
 
 // 初期値の設定
 onMounted(() => {
+  console.log('ChildForm マウント時の子供情報:', props.child);
   if (props.child) {
     form.name = props.child.name;
     form.birth_date = props.child.birth_date;
@@ -113,6 +114,49 @@ onMounted(() => {
     form.notes = props.child.notes;
   }
 });
+
+// props.child が変更されたときにフォームを更新
+watch(() => props.child, (newVal) => {
+  console.log('子供情報が変更されました:', newVal);
+  if (newVal) {
+    console.log('生年月日:', newVal.birth_date, typeof newVal.birth_date);
+    
+    form.name = newVal.name || '';
+    
+    if (newVal.birth_date) {
+      try {
+        // タイムスタンプ付きの日付文字列から日付部分だけを抽出
+        // "2025-04-02T00:00:00.000000Z" → "2025-04-02"
+        const dateString = newVal.birth_date.split('T')[0];
+        console.log('抽出した日付部分:', dateString);
+        
+        // 直接フォームに設定
+        form.birth_date = dateString;
+        
+        // DOMの更新を確実にするため、nextTickを使用
+        nextTick(() => {
+          // DOMが更新された後に実行される
+          // input要素に直接値を設定
+          const dateInput = document.getElementById('birth_date') as HTMLInputElement;
+          if (dateInput) {
+            dateInput.value = dateString;
+            console.log('input要素に直接値を設定:', dateString);
+          }
+        });
+      } catch (e) {
+        console.error('日付変換エラー:', e);
+        form.birth_date = '';
+      }
+    } else {
+      form.birth_date = '';
+    }
+    
+    form.gender = newVal.gender || null;
+    form.notes = newVal.notes || null;
+    
+    console.log('フォームに設定された値:', { ...form });
+  }
+}, { immediate: true });
 
 // フォーム送信
 const handleSubmit = () => {

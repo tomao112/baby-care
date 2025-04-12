@@ -9,7 +9,6 @@ import ChildrenView from '@/views/ChildrenView.vue';
 import ChildrenDetailView from '@/views/ChildrenDetailView.vue';
 import Profile from '@/views/Profile.vue';
 import GrowthRecord from '@/views/GrowthRecord.vue';
-import Development from '@/views/Development.vue'
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -54,12 +53,6 @@ const routes: Array<RouteRecordRaw> = [
     props: true,
     meta: { requiresAuth: true }
   },
-  {
-    path: '/children/:id/development',
-    name: 'development',
-    component: Development,
-    meta: { requiresAuth: true }
-  }
 ]
 
 const router = createRouter({

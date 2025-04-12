@@ -276,7 +276,6 @@ import { useChildrenStore } from '@/stores/children';
 import { Child, ChildsForm, DailyRecord } from '@/types';
 import ChildForm  from '@/components/children/ChildForm.vue';
 import ModalDialog from '@/components/ModalDialog.vue';
-import Development from './Development.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -371,11 +370,6 @@ const deleteEvent = async (event: CalendarEvent, index: number) => {
   
   try {
     // APIを使って実際に削除する
-    // 注意: ここではAPIから返された記録IDが必要です
-    // 現状の実装では各イベントにIDがないため、実際の環境では調整が必要です
-    // 例: selectedDayEvents.value[index].id を使うなど
-    
-    // 仮の実装: 現在の選択日の記録をすべて取得してインデックスで削除
     if (child.value) {
       // その日付の記録を取得
       const dateStr = selectedDate.value;
@@ -390,11 +384,38 @@ const deleteEvent = async (event: CalendarEvent, index: number) => {
         record => record.record_date.startsWith(dateStr)
       );
       
+      // デバッグ: 何が取得できているか確認
+      console.log('対象の日付の記録:', dailyRecords);
+      console.log('削除対象インデックス:', index);
+      
       if (dailyRecords.length > index) {
         // インデックスに一致する記録を削除
         const recordToDelete = dailyRecords[index];
-        await childrenStore.deleteDailyRecord(recordToDelete.id);
-        console.log('記録を削除しました:', recordToDelete);
+        
+        // デバッグログを追加
+        console.log('削除対象レコード:', recordToDelete);
+        
+        // IDの存在チェックと型変換
+        if (recordToDelete && recordToDelete.id) {
+          // IDが数値型に確実に変換できることを確認
+          const recordId = Number(recordToDelete.id);
+          if (!isNaN(recordId)) {
+            await childrenStore.deleteDailyRecord(
+              child.value.id.toString(), 
+              recordId
+            );
+            console.log('記録を削除しました:', recordToDelete);
+          } else {
+            console.error('IDが数値ではありません:', recordToDelete.id);
+            throw new Error('レコードIDが無効です');
+          }
+        } else {
+          console.error('削除対象のレコードにIDがありません:', recordToDelete);
+          throw new Error('レコードIDが見つかりません');
+        }
+      } else {
+        console.error('指定されたインデックスの記録が見つかりません');
+        throw new Error('記録が見つかりません');
       }
     }
     
@@ -406,7 +427,7 @@ const deleteEvent = async (event: CalendarEvent, index: number) => {
     const selectedDayInCalendar = currentCalendarDays.find(day => day.date === selectedDate.value);
     if (selectedDayInCalendar) {
       // 該当のイベントを削除（インデックスではなく、内容で削除）
-      selectedDayInCalendar.events = selectedDayInCalendar.events.filter((e, i) => i !== index);
+      selectedDayInCalendar.events = selectedDayInCalendar.events.filter((_, i) => i !== index);
       selectedDayInCalendar.hasEvent = selectedDayInCalendar.events.length > 0;
     }
     
@@ -769,12 +790,6 @@ watch([currentYear, currentMonth], async () => {
 // イベントタイプがあるかチェックする関数を追加
 const hasEventType = (day: CalendarDay, type: string): boolean => {
   return day.events && day.events.some(event => event.type === type);
-};
-
-// イベントタイプのカウントを取得する関数（必要に応じて）
-const countEventType = (day: CalendarDay, type: string): number => {
-  if (!day.events) return 0;
-  return day.events.filter(event => event.type === type).length;
 };
 
 // 選択された日付を読みやすい形式に変換する関数
@@ -1586,6 +1601,7 @@ const formatSelectedDate = (dateStr: string): string => {
   text-align: center;
   background: linear-gradient(90deg, #6a5acd, #9370db);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -1980,6 +1996,7 @@ const formatSelectedDate = (dateStr: string): string => {
   text-align: center;
   background: linear-gradient(90deg, #6a5acd, #9370db);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
