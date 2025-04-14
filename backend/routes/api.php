@@ -18,11 +18,14 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // 子ども情報のCRUD
     Route::apiResource('children', ChildController::class);
+
+    // 成長記録
     Route::get('children/{childId}/growth-records', [GrowthRecordController::class, 'getByChild']);
-    Route::post('/growth-records', [GrowthRecordController::class, 'edit']);
-    Route::put('/growth-records/{id}', [GrowthRecordController::class, 'update']);
+    Route::post('/growth-records', [GrowthRecordController::class, 'create']);
+    Route::put('growth-records/{id}', [GrowthRecordController::class, 'update']);
 
     // 育児記録
     Route::get('/children/{childId}/daily-records', \App\Http\Api\Children\Record\Daily\Controllers\ShowAction::class);
     Route::post('/children/{childId}/daily-records', \App\Http\Api\Children\Record\Daily\Controllers\IndexAction::class);
+    Route::delete('/children/{childId}/daily-records/{id}', \App\Http\Api\Children\Record\Daily\Controllers\DeleteAction::class);
 });

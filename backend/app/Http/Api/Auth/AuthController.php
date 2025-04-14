@@ -7,6 +7,7 @@ use App\Services\AuthService;
 use Illuminate\Http\Request;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\Auth\UpdateUserRequest;
 use Illuminate\Support\Facades\Log;
 use App\Exceptions\Auth\UserAlreadyExistsException;
 
@@ -78,7 +79,7 @@ class AuthController extends Controller
     /**
      * ユーザーの情報を更新
      */
-    public function update(Request $request)
+    public function update(UpdateUserRequest $request)
     {
         try {
             $user = $this->authService->updateUser($request->user(), $request->validated());
