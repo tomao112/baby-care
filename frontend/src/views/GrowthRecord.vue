@@ -430,10 +430,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, nextTick, watch } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useChildrenStore } from '@/stores/children';
-import { Child, ChildsForm, GrowthRecord } from '@/types';
+import { Child, GrowthRecord } from '@/types';
 
 const route = useRoute();
 const router = useRouter();
@@ -464,7 +464,7 @@ interface ChildWithRecords extends Child {
 
 const child = ref<ChildWithRecords | null>(null);
 
-const month = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+// const month = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
 
 // 表示制限の初期値
 const displayLimit = ref(6);
@@ -1843,11 +1843,13 @@ setTimeout(() => {
 input[type=number]::-webkit-inner-spin-button, 
 input[type=number]::-webkit-outer-spin-button { 
   -webkit-appearance: none; 
+  appearance: none;
   margin: 0; 
 }
 
 input[type=number] {
   -moz-appearance: textfield; /* Firefox用 */
+  appearance: textfield; /* 標準プロパティを追加 */
 }
 
 /* モーダルがはみ出さないようにする修正 */
