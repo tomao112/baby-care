@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateGrowthRecordRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Services\GrowthRecordService;
+use Illuminate\Support\Facades\Log;
 
 class GrowthRecordController extends Controller
 {
@@ -32,17 +33,41 @@ class GrowthRecordController extends Controller
         }
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function update(Request $request, GrowthRecord $growthRecord)
+    public function create(Request $request)
     {
         try {
-            $growthRecord = $this->growthRecordService->update($request, $growthRecord);
+            $growthRecord = $this->growthRecordService->create($request);
             return response()->json($growthRecord, 200);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => '成長記録の更新に失敗しました'
+                'message' => '成長記録の作成に失敗しました'
+            ], 400);
+        }
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function update(Request $request, $id)
+    {
+        try {
+            // IDを使って明示的にレコードを取得
+            $growthRecord = GrowthRecord::findOrFail($id);
+
+            Log::info('更新リクエスト受信:', [
+                'id' => $id,
+                'record_id' => $growthRecord->id,
+                'データ' => $request->all()
+            ]);
+
+            $growthRecord = $this->growthRecordService->update($request, $growthRecord);
+            return response()->json($growthRecord, 200);
+        } catch (\Exception $e) {
+            Log::error('更新エラー: ' . $e->getMessage(), [
+                'スタックトレース' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'message' => '成長記録の更新に失敗しました: ' . $e->getMessage()
             ], 400);
         }
     }

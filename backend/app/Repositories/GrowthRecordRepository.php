@@ -8,11 +8,11 @@ use Illuminate\Support\Facades\DB;
 
 class GrowthRecordRepository
 {
-    public function findByRecord(string $childId): ?Child
+    public function findByRecord(string $childId)
     {
         return GrowthRecord::where('child_id', $childId)
-        ->orderBy('record_date', 'desc')
-        ->get();
+            ->orderBy('record_date', 'desc')
+            ->get();
     }
 
     public function create(array $validated): GrowthRecord
